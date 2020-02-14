@@ -13,7 +13,7 @@ public class Controller : MonoBehaviour
     bool[,] grid;
     bool[,] newGrid;
     SpriteRenderer[,] spriteRenderers;
-    public bool start;
+    public bool start, running;
     private void Awake()
     {
         controller = this;
@@ -54,9 +54,6 @@ public class Controller : MonoBehaviour
         }
         newGrid = grid;
 
-        newGrid[5, 5] = true;
-        newGrid[6, 5] = true;
-        newGrid[4, 5] = true;
         RenderGrid();
     }
 
@@ -65,11 +62,24 @@ public class Controller : MonoBehaviour
     {
         if(start)
         {
-            CalculateNewGrid();
-            RenderGrid();
+            if (!running)
+            {
+                StartCoroutine(compute());
+            }
         }
-        
     }
+
+    IEnumerator compute()
+    {
+        running = true;
+        CalculateNewGrid();
+        if (grid == newGrid)
+            Debug.Log("Done!");
+        RenderGrid();
+        yield return null;
+        running = false;
+    }
+
 
     void CalculateNewGrid()
     {
@@ -109,26 +119,20 @@ public class Controller : MonoBehaviour
     void RenderGrid()
     {
         grid = newGrid;
-        for (int y = 1; y < size.y; y++)
+        for (int y = 1; y <= size.y; y++)
         {
-            for (int x = 1; x < size.x; x++)
+            for (int x = 1; x <= size.x; x++)
             {
-                Debug.Log("(" + x + ", " + y + ")");
                 if (grid[x, y])
                 {
                     spriteRenderers[x, y].color = Color.black;
-                    if (x == 2 && y == 1)
-                        Debug.Log("Yes");
                 }
                 else
                 {
                     spriteRenderers[x, y].color = Color.white;
-                    if (x == 2 && y == 1)
-                        Debug.Log("No");
                 }
                   
             }
-            Debug.Log("Y");
             
         }
     }
@@ -168,4 +172,39 @@ public class Controller : MonoBehaviour
         else
             spriteRenderers[x, y].color = Color.white;
     }
+
+    public void random()
+    {
+        if (start || running)
+        {
+            start = false;
+            StartCoroutine(callAfterFrame());
+            return;
+        }
+        if (!start)
+        {
+            grid = new bool[size.x + 2, size.y + 2];
+            newGrid = grid;
+            for (int y = 1; y <= size.y; y++)
+            {
+                for (int x = 1; x <= size.x; x++)
+                {
+                    int rand = Random.Range(1, 3);
+                    Debug.Log(rand);
+                    if (rand == 1)
+                        newGrid[x, y] = true;
+                }
+            }
+            RenderGrid();
+        }
+    }
+    IEnumerator callAfterFrame()
+    {
+        yield return null;
+        random();
+
+    }
+ 
+
+
 }

@@ -144,7 +144,7 @@ InputManager:
     gravity: 0
     dead: 0
     sensitivity: 0.1
-    snap: 0
+    snap: 1
     invert: 0
     type: 1
     axis: 2
@@ -240,9 +240,9 @@ InputManager:
     gravity: 1000
     dead: 0.001
     sensitivity: 1000
-    snap: 0
+    snap: 1
     invert: 0
-    type: 0
+    type: 1
     axis: 0
     joyNum: 0
   - serializedVersion: 3
@@ -279,6 +279,22 @@ InputManager:
     joyNum: 0
   - serializedVersion: 3
     m_Name: Cancel
+    descriptiveName: 
+    descriptiveNegativeName: 
+    negativeButton: 
+    positiveButton: escape
+    altNegativeButton: 
+    altPositiveButton: joystick button 1
+    gravity: 1000
+    dead: 0.001
+    sensitivity: 1000
+    snap: 0
+    invert: 0
+    type: 0
+    axis: 0
+    joyNum: 0
+  - serializedVersion: 3
+    m_Name: DoubleDrag
     descriptiveName: 
     descriptiveNegativeName: 
     negativeButton: 
