@@ -10,7 +10,7 @@ public class Controller : MonoBehaviour
     [SerializeField]
     public Vector2Int size;
     [SerializeField]
-    bool[,] grid;
+    public bool[,] grid {get; private set;}
     bool[,] newGrid;
     SpriteRenderer[,] spriteRenderers;
     public bool start, running;
@@ -34,6 +34,7 @@ public class Controller : MonoBehaviour
                 obj.transform.position = new Vector2(x / 2f - 0.25f, y / 2f - 0.25f);
                 spriteRenderers[x, y] = obj.GetComponent<SpriteRenderer>();
                 obj.transform.parent = parent.transform;
+                obj.GetComponent<CellContainer>().position = new Vector2Int(x, y);
             }
         }
         for (int x = 0; x <= size.x; x++)
@@ -164,7 +165,7 @@ public class Controller : MonoBehaviour
         return sum;
     }
 
-    public void modify(int x, int y, bool b)
+    public void Modify(int x, int y, bool b)
     {
         grid[x, y] = b;
         if (b)
@@ -172,8 +173,16 @@ public class Controller : MonoBehaviour
         else
             spriteRenderers[x, y].color = Color.white;
     }
+    public void Modify(Vector2Int pos, bool b)
+    {
+        grid[pos.x, pos.y] = b;
+        if (b)
+            spriteRenderers[pos.x, pos.y].color = Color.black;
+        else
+            spriteRenderers[pos.x, pos.y].color = Color.white;
+    }
 
-    public void random()
+    public void RandomCells()
     {
         if (start || running)
         {
@@ -201,7 +210,7 @@ public class Controller : MonoBehaviour
     IEnumerator callAfterFrame()
     {
         yield return null;
-        random();
+        RandomCells();
 
     }
  
