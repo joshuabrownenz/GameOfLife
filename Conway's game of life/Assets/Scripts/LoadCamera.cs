@@ -20,7 +20,7 @@ public class LoadCamera : MonoBehaviour
     void Start()
     {
         view = GetComponent<Camera>();
-        controller = Controller.controller;
+        controller = Controller.main;
         //transform.position = new Vector3((controller.size.x) / 4f,( controller.size.y)/ 4f, -5);
         transform.position = new Vector3(0, 0, -5);
         scrollLimits.y = controller.size.y / 4 + 1;

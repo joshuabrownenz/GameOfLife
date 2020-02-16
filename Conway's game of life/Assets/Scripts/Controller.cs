@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 
 public class Controller : MonoBehaviour
 {
-    public static Controller controller;
+    public static Controller main;
 
     [SerializeField]
     public Vector2Int size;
@@ -14,9 +14,11 @@ public class Controller : MonoBehaviour
     bool[,] newGrid;
     SpriteRenderer[,] spriteRenderers;
     public bool start, running;
+    [HideInInspector]
+    public bool click;
     private void Awake()
     {
-        controller = this;
+        main = this;
     }
     // Start is called before the first frame update
     void Start()
@@ -215,7 +217,10 @@ public class Controller : MonoBehaviour
         yield return null;
     }
 
- 
-
+    public void Clear()
+    {
+        newGrid = new bool[size.x + 2, size.y + 2];
+        RenderGrid();
+    }
 
 }

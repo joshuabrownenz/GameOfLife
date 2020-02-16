@@ -1,14 +1,22 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Editor : MonoBehaviour
 {
+    public static Editor main;
 
     Controller controller;
-    Vector2Int coords;
+    public Vector2Int mostRecentCoords;
+    public float editTime;
     // Start is called before the first frame update
+    private void Awake()
+    {
+        main = this;
+    }
     void Start()
     {
-        controller = Controller.controller;
+        controller = Controller.main;
     }
 
     // Update is called once per frame
@@ -16,9 +24,8 @@ public class Editor : MonoBehaviour
     {
         if(!controller.start)
         {
-            if(Input.GetMouseButtonDown(0))
+            if(Input.GetMouseButtonDown(0) && EventSystem.current.currentSelectedGameObject == null)
             {
-                Debug.Log("Ray");
                 SwitchCell();
             }
         }
@@ -34,7 +41,10 @@ public class Editor : MonoBehaviour
             {
                 Vector2Int vector2Int = hit.transform.gameObject.GetComponent<CellContainer>().position;
                 if (controller.grid[vector2Int.x, vector2Int.y])
+                {
                     controller.Modify(vector2Int, false);
+
+                }
                 else
                     controller.Modify(vector2Int, true);
 
