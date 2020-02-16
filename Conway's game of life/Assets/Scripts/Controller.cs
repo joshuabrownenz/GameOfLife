@@ -31,7 +31,7 @@ public class Controller : MonoBehaviour
             {
                 GameObject obj = Instantiate(Resources.Load("cell") as GameObject);
                 obj.name = "Cell: (" + x + ", " + y + ")";
-                obj.transform.position = new Vector2(x / 2f - 0.25f, y / 2f - 0.25f);
+                obj.transform.position = new Vector2(x / 2f - 0.25f - size.x/4f, y / 2f - 0.25f - size.y/4f);
                 spriteRenderers[x, y] = obj.GetComponent<SpriteRenderer>();
                 obj.transform.parent = parent.transform;
                 obj.GetComponent<CellContainer>().position = new Vector2Int(x, y);
@@ -184,12 +184,18 @@ public class Controller : MonoBehaviour
 
     public void RandomCells()
     {
+        StartCoroutine(RandomCellsCoroutine());
+    }
+
+
+    IEnumerator RandomCellsCoroutine()
+    {
         if (start || running)
         {
             start = false;
-            StartCoroutine(callAfterFrame());
-            return;
+            yield return null; ;
         }
+
         if (!start)
         {
             grid = new bool[size.x + 2, size.y + 2];
@@ -206,13 +212,9 @@ public class Controller : MonoBehaviour
             }
             RenderGrid();
         }
-    }
-    IEnumerator callAfterFrame()
-    {
         yield return null;
-        RandomCells();
-
     }
+
  
 
 
