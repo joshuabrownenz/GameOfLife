@@ -25,7 +25,6 @@ public class Controller : MonoBehaviour
     {
         grid = new bool[size.x + 2, size.y + 2];
         spriteRenderers = new SpriteRenderer[size.x + 2, size.y + 2];
-
         GameObject parent = new GameObject("Grid");
         for (int y = 1; y <= size.y; y++)
         {
@@ -113,8 +112,6 @@ public class Controller : MonoBehaviour
                         break;
 
                 }
-
-
             }
         }
     }
@@ -184,6 +181,14 @@ public class Controller : MonoBehaviour
             spriteRenderers[pos.x, pos.y].color = Color.white;
     }
 
+    public void ModifyView(Vector2Int pos, bool b)
+    {
+        if (b)
+            spriteRenderers[pos.x, pos.y].color = Color.black;
+        else
+            spriteRenderers[pos.x, pos.y].color = Color.white;
+    }
+
     public void RandomCells()
     {
         StartCoroutine(RandomCellsCoroutine());
@@ -207,7 +212,6 @@ public class Controller : MonoBehaviour
                 for (int x = 1; x <= size.x; x++)
                 {
                     int rand = Random.Range(1, 3);
-                    Debug.Log(rand);
                     if (rand == 1)
                         newGrid[x, y] = true;
                 }

@@ -53,10 +53,10 @@ public class Buttons : MonoBehaviour
 
     void Clear()
     {
-        Debug.Log("Clear");
-        if(!controller.start)
-        {
-            controller.Clear();
-        }
+        startButton.gameObject.SetActive(true);
+        stopButton.gameObject.SetActive(false);
+        controller.start = false;
+        controller.Clear();
+        
     }
 }
