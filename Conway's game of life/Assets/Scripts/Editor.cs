@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 public class Editor : MonoBehaviour
 {
     public static Editor main;
+    public bool allowEditing;
     [SerializeField]
     Controller controller;
     public Vector2Int mostRecentCoords;
@@ -25,12 +26,13 @@ public class Editor : MonoBehaviour
     void Start()
     {
         controller = Controller.main;
+        allowEditing = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!controller.start)
+        if (!controller.start && allowEditing)
         {
             if(Input.GetMouseButtonUp(0) && (isDragEditing || isShift))
             {
@@ -120,7 +122,6 @@ public class Editor : MonoBehaviour
                 prevIsX = isX;
                 
             }
-
         }
     }
 
@@ -128,7 +129,6 @@ public class Editor : MonoBehaviour
     {
         if (isDragEditing)
         {
-            Debug.Log("Save Drag");
             foreach (Vector2Int coords in editedSquares)
             {
                 controller.Modify(coords, on);
@@ -136,7 +136,6 @@ public class Editor : MonoBehaviour
         }
         else
         {
-            Debug.Log("Save Shift");
             int multiplier = shiftLength / Mathf.Abs(shiftLength);
             for (int index = 0; index < Mathf.Abs(shiftLength); index++)
             {

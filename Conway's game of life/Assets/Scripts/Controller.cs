@@ -75,8 +75,6 @@ public class Controller : MonoBehaviour
     {
         running = true;
         CalculateNewGrid();
-        if (grid == newGrid)
-            Debug.Log("Done!");
         RenderGrid();
         yield return null;
         running = false;
