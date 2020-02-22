@@ -15,7 +15,8 @@ public class LoadCamera : MonoBehaviour
     [SerializeField]
     float dragSpeed;
     Vector2 previousMousePostion;
-
+    [SerializeField]
+    float expo, startAmount;
     // Start is called before the first frame update
     void Start()
     {
@@ -55,8 +56,8 @@ public class LoadCamera : MonoBehaviour
             {
                 previousMousePostion = new Vector2(Input.mousePosition.x - Camera.main.pixelWidth, Input.mousePosition.y - Camera.main.pixelHeight);
             }
-            float translateX = (previousMousePostion.x - (Input.mousePosition.x - Camera.main.pixelWidth)) * Time.deltaTime * dragSpeed * view.orthographicSize/1.5f;
-            float translateY = (previousMousePostion.y - (Input.mousePosition.y - Camera.main.pixelHeight)) * Time.deltaTime * dragSpeed * view.orthographicSize/1.5f;
+            float translateX = (previousMousePostion.x - (Input.mousePosition.x - Camera.main.pixelWidth)) * Time.deltaTime * dragSpeed * view.orthographicSize * startAmount;
+            float translateY = (previousMousePostion.y - (Input.mousePosition.y - Camera.main.pixelHeight)) * Time.deltaTime * dragSpeed * view.orthographicSize * startAmount;
             transform.position += new Vector3(translateX, translateY, 0);
             previousMousePostion = new Vector2(Input.mousePosition.x - Camera.main.pixelWidth, Input.mousePosition.y - Camera.main.pixelHeight);
         }

@@ -22,17 +22,8 @@ public class SaveController : MonoBehaviour
         NamePanel = transform.parent.Find("OpenPanel").Find("SaveName").gameObject;
         NamePanel.SetActive(false);
 
-        SaveData s = new SaveData();
-        s.saveGrid = new bool[10, 10];
-        s.name = "Ha";
-
-        for(int i = 0; i < 100; i++)
-        {
-            InsertElement(s);
-        }
+      
     }
-
-    
     
 
     // Update is called once per frame
@@ -43,11 +34,13 @@ public class SaveController : MonoBehaviour
             Vector2Int coords = GetCoords();
             if (Input.GetMouseButtonDown(0))
             {
+                if (coords == new Vector2Int(-1, -1))
+                    return;
                 enterCoords = coords;
                 selecting = true;
 
             }
-            else if (Input.GetMouseButton(0))
+            else if (Input.GetMouseButton(0) && selecting)
             {
                 RenderSelect(coords);
             }
