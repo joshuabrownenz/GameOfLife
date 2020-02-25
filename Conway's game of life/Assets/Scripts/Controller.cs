@@ -12,15 +12,27 @@ public class Controller : MonoBehaviour
     [SerializeField]
     public bool[,] grid {get; private set;}
     bool[,] newGrid;
-    SpriteRenderer[,] spriteRenderers;
+    public SpriteRenderer[,] spriteRenderers;
     public bool start, running;
     [HideInInspector]
     public bool click;
+
+    public bool[][,] history = new bool[100][,];
+    public int historyIndex = 0;
+    public int historyLimit = 0;
+
+    bool arrowHold;
+    float holdStartTime;
+    float holdRunTime;
+    [SerializeField]
+    float holdTime, gapHoldLength;
+
     private void Awake()
     {
         main = this;
     }
     // Start is called before the first frame update
+
     void Start()
     {
         grid = new bool[size.x + 2, size.y + 2];
@@ -56,7 +68,26 @@ public class Controller : MonoBehaviour
         }
         newGrid = grid;
 
+        //for(int y = 1; y <= 100; y++)
+        //{
+        //    for (int x = 1; x <= 100; x++)
+        //    {
+        //        int num = y * 99 + x;
+        //        if(num%2 == 0)
+        //            newGrid[x, y] = true;
+        //    }
+        //}
+
         RenderGrid();
+
+        for (int i = 0; i < 100; i++)
+        {
+            history[i] = new bool[size.x + 2, size.y + 2];
+        }
+
+
+       
+
     }
 
     // Update is called once per frame
@@ -68,6 +99,48 @@ public class Controller : MonoBehaviour
             {
                 StartCoroutine(compute());
             }
+        }
+        else
+        {
+            if(Input.GetKeyUp(KeyCode.RightArrow) ||  Input.GetKeyUp(KeyCode.LeftArrow))
+            {
+                arrowHold = false;
+            }
+
+            if(Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                arrowHold = true;
+                holdStartTime = Time.time;
+                RightMove();
+            }
+            if(Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                arrowHold = true;
+                holdStartTime = Time.time;
+                LeftMove();
+            }
+
+            if (arrowHold && ((holdStartTime + holdTime) < Time.time) && ((holdRunTime + gapHoldLength) < Time.time))
+            {
+                if(Input.GetKey(KeyCode.RightArrow) && !running)
+                {
+                    RightMove();
+                } 
+                else if(Input.GetKey(KeyCode.LeftArrow))
+                {
+                    LeftMove();
+                }
+                holdRunTime = Time.time;
+            }
+
+            //if ((Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand)) && Input.GetKeyDown(KeyCode.Z))
+            //{
+            //    arrowHold = true;
+            //    holdStartTime = Time.time;
+            //    CtrlZ();
+            //}
+
+
         }
     }
 
@@ -112,6 +185,25 @@ public class Controller : MonoBehaviour
                 }
             }
         }
+
+        AddToHistoryIndex();
+
+        history[historyIndex] = newGrid;
+
+    }
+
+    public void AddToHistoryIndex()
+    {
+        bool adjustLimit = false;
+        if (historyLimit == historyIndex)
+            adjustLimit = true;
+
+        historyIndex++;
+        if (historyIndex > 99)
+            historyIndex = 0;
+
+        if (adjustLimit)
+            historyLimit = historyIndex;
     }
 
     void RenderGrid()
@@ -134,9 +226,6 @@ public class Controller : MonoBehaviour
             
         }
     }
-
-
-
 
     int checkSquares(int x, int y)
     {
@@ -187,13 +276,8 @@ public class Controller : MonoBehaviour
             spriteRenderers[pos.x, pos.y].color = Color.white;
     }
 
-    public void RandomCells()
-    {
-        StartCoroutine(RandomCellsCoroutine());
-    }
 
-
-    IEnumerator RandomCellsCoroutine()
+    public IEnumerator RandomCellsCoroutine()
     {
         if (start || running)
         {
@@ -223,6 +307,80 @@ public class Controller : MonoBehaviour
     {
         newGrid = new bool[size.x + 2, size.y + 2];
         RenderGrid();
+        OnEdit();
     }
 
+    public void RightMove()
+    {
+        history[historyIndex] = grid;
+        StartCoroutine(compute());
+
+        //if (historyIndex == historyLimit)
+        //{
+        //  StartCoroutine(compute());
+        //  return;
+        //}
+        //else
+        //{
+        //    historyIndex++;
+        //    if (historyIndex > 99)
+        //        historyIndex = 0;
+        //    newGrid = history[historyIndex];
+        //    Debug.Log(historyIndex);
+        //    RenderGrid();
+        //}
+
+    }
+
+    public void LeftMove()
+    {
+        int tempHistoryIndex = historyIndex - 1;
+
+        if(tempHistoryIndex < 0)
+        {
+            tempHistoryIndex = 99;
+        }
+
+        if(tempHistoryIndex == historyLimit)
+        {
+            return;
+        }
+       
+        newGrid = history[tempHistoryIndex];
+
+        historyIndex = tempHistoryIndex;
+        RenderGrid();
+
+        
+    }
+
+    //void CtrlZ()
+    //{
+    //    if(editNum > 0)
+    //    {
+    //        LeftMove();
+    //    }
+    //}
+
+    public void OnEdit()
+    {
+
+
+        AddToHistoryIndex();
+
+        //bool[,] tempGrid = new bool[size.x + 1, size.y];
+
+        //for (int y = 1; y < size.y; y++)
+        //{
+        //    for (int x = 1; x < size.x; x++)
+        //    {
+        //        tempGrid[x, y] = grid[x, y];
+        //    }
+        //}
+
+        object tempGrid = grid.Clone();
+
+        history[historyIndex] = (bool[,])tempGrid;
+
+    }
 }

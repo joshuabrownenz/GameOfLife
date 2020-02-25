@@ -59,4 +59,11 @@ public class Buttons : MonoBehaviour
         controller.Clear();
         
     }
+
+    public void RandomCells()
+    {
+        StartCoroutine(controller.RandomCellsCoroutine());
+        startButton.gameObject.SetActive(true);
+        stopButton.gameObject.SetActive(false);
+    }
 }

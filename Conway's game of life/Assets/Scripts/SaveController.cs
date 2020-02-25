@@ -21,8 +21,6 @@ public class SaveController : MonoBehaviour
         controller = Controller.main;
         NamePanel = transform.parent.Find("OpenPanel").Find("SaveName").gameObject;
         NamePanel.SetActive(false);
-
-      
     }
     
 
@@ -158,7 +156,8 @@ public class SaveController : MonoBehaviour
         }
         newSaves[oldSaves.Length] = data;
         SaveDisplay.main.saves = newSaves;
-        }
+        SaveDisplay.main.SaveToFile();
+    }
 
     bool[,] CalculateSection(Vector2Int vector)
     {
@@ -219,5 +218,9 @@ public class SaveController : MonoBehaviour
         saveMode = !saveMode;
         Editor.main.allowEditing = !saveMode;
     }
+
+
+
+
 }
 

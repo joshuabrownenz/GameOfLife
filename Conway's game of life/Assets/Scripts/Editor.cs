@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -9,6 +8,7 @@ public class Editor : MonoBehaviour
     public bool allowEditing;
     [SerializeField]
     Controller controller;
+    SavePlacer savePlacer;
     public Vector2Int mostRecentCoords;
     public float editTime;
     Vector2Int enterCoords;
@@ -26,6 +26,7 @@ public class Editor : MonoBehaviour
     void Start()
     {
         controller = Controller.main;
+        savePlacer = SavePlacer.main;
         allowEditing = true;
     }
 
@@ -34,18 +35,23 @@ public class Editor : MonoBehaviour
     {
         if (!controller.start && allowEditing)
         {
-            if(Input.GetMouseButtonUp(0) && (isDragEditing || isShift))
+            if(Input.GetMouseButtonUp(0) && (isDragEditing || isShift) && !savePlacer.justPlaced)
             {
+                
                 saveEdits();
                 isShift = false;
                 isDragEditing = false;
+                controller.OnEdit();
+
+                //controller.historyLimit = controller.historyIndex;
             }
             newCoords = GetCoords(newCoords);
-            if (Input.GetMouseButtonDown(0) && EventSystem.current.currentSelectedGameObject == null)
+
+            if (Input.GetMouseButtonDown(0) && EventSystem.current.currentSelectedGameObject == null && !savePlacer.justPlaced)
             {
                 editedSquares = new List<Vector2Int>();
                 isDragEditing = true;
-                if (Input.GetKey(KeyCode.LeftShift))
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift))
                 {
                     isShift = true;
                     isDragEditing = false;
@@ -60,6 +66,7 @@ public class Editor : MonoBehaviour
                 controller.ModifyView(enterCoords, on);
                 editedSquares.Add(enterCoords);
             }
+
             if (Input.GetMouseButton(0) && EventSystem.current.currentSelectedGameObject == null && isDragEditing)
             {
                 if (!editedSquares.Contains(newCoords))
@@ -68,6 +75,7 @@ public class Editor : MonoBehaviour
                     editedSquares.Add(newCoords);
                 }
             }
+
             if (Input.GetMouseButton(0) && EventSystem.current.currentSelectedGameObject == null && isShift)
             {
                 Vector2Int vector = enterCoords - newCoords;
@@ -131,6 +139,7 @@ public class Editor : MonoBehaviour
         {
             foreach (Vector2Int coords in editedSquares)
             {
+                Debug.Log("Saved");
                 controller.Modify(coords, on);
             }
         }
@@ -148,7 +157,18 @@ public class Editor : MonoBehaviour
                     controller.Modify(new Vector2Int(enterCoords.x, enterCoords.y + (index * multiplier)), on);
                 }
             }
+
         }
+        int trues = 0;
+        foreach (bool b in controller.grid)
+        {
+            if (b)
+                trues++;
+        }
+        Debug.Log("True Grid: " + trues);
+
+
+
     }
 
     //void SwitchCell()
