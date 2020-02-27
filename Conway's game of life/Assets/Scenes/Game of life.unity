@@ -4341,6 +4341,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a8577019bb0942519162e4fadf214d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cellUI: {fileID: 2835180482775028923, guid: c762ce249d4ce40f09db0bba82a928cd, type: 3}
   saves: []
   page: 1
   optionImages: []
@@ -4729,6 +4730,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73fef163ed3914312a28e724dd4d0436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cell: {fileID: 6402614630092695591, guid: 5a3d80d38524b4006a7093fd92359288, type: 3}
   size: {x: 100, y: 100}
   start: 0
   running: 0

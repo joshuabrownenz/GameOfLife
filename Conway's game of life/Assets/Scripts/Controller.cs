@@ -8,6 +8,9 @@ public class Controller : MonoBehaviour
     public static Controller main;
 
     [SerializeField]
+    GameObject cell;
+
+    [SerializeField]
     public Vector2Int size;
     [SerializeField]
     public bool[,] grid {get; private set;}
@@ -42,7 +45,7 @@ public class Controller : MonoBehaviour
         {
             for (int x = 1; x <= size.x; x++)
             {
-                GameObject obj = Instantiate(Resources.Load("cell") as GameObject);
+                GameObject obj = Instantiate(cell);
                 obj.name = "Cell: (" + x + ", " + y + ")";
                 obj.transform.position = new Vector2(x / 2f - 0.25f - size.x/4f, y / 2f - 0.25f - size.y/4f);
                 spriteRenderers[x, y] = obj.GetComponent<SpriteRenderer>();

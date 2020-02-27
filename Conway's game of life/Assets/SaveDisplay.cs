@@ -8,6 +8,10 @@ using UnityEngine.UI;
 public class SaveDisplay : MonoBehaviour
 {
     public static SaveDisplay main;
+
+    [SerializeField]
+    GameObject cellUI;
+
     [SerializeField]
     public SaveData[] saves;
     [SerializeField]
@@ -139,7 +143,7 @@ public class SaveDisplay : MonoBehaviour
             {
                 for (int x = 1; x <= optionGrid.GetLength(0); x++) 
                 {
-                    GameObject obj = Instantiate(Resources.Load("CellUI") as GameObject);
+                    GameObject obj = Instantiate(cellUI);
                     obj.transform.SetParent(optionImages[option - (page - 1) * 6 - 1].transform);
                     obj.transform.localScale = new Vector2(scale, scale);
                     obj.name = "Cell: (" + x + ", " + y + ")";
@@ -183,7 +187,7 @@ public class SaveDisplay : MonoBehaviour
         {
             for (int x = 1; x <= optionGrid.GetLength(0); x++)
             {
-                GameObject obj = Instantiate(Resources.Load("CellUI") as GameObject);
+                GameObject obj = Instantiate(cellUI);
                 obj.transform.SetParent(optionImages[option - 1].transform);
                 obj.transform.localScale = new Vector2(scale, scale);
                 obj.name = "Cell: (" + x + ", " + y + ")";
