@@ -5,10 +5,12 @@ using UnityEngine.UI;
 
 public class BackgroundController : MonoBehaviour
 {
+    public static BackgroundController main; 
+
 
     RectTransform backgroundPanel;
     
-    Vector2 canvasDimensions;
+    public Vector2 canvasDimensions;
     [SerializeField]
     Vector2 initialCanvasDimensions, minSize;
 
@@ -51,7 +53,10 @@ public class BackgroundController : MonoBehaviour
     Vector2 mouseImagePos;
     Texture2D currentCursor;
 
-     
+    void Awake()
+    {
+        main = this; 
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -193,7 +198,6 @@ public class BackgroundController : MonoBehaviour
 
     void ResizePanel()
     {
-        Debug.Log("Resize Corner");
         Vector2 mousePos = Input.mousePosition;
         mousePos -= new Vector2(canvasDimensions.x / 2, canvasDimensions.y / 2);
         float widthDelta = 0, heightDelta = 0;
@@ -273,6 +277,10 @@ public class BackgroundController : MonoBehaviour
         }
 
         backgroundPanel.anchoredPosition += mouseDelta / 2;
+
+        //Debug.Log("Yes");
+
+        Grapher.main.AdjustGraph();
     }
 
     void MovePanel()

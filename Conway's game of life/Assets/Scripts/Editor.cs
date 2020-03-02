@@ -139,7 +139,7 @@ public class Editor : MonoBehaviour
         {
             foreach (Vector2Int coords in editedSquares)
             {
-                Debug.Log("Saved");
+                //Debug.Log("Saved");
                 controller.Modify(coords, on);
             }
         }
@@ -165,7 +165,7 @@ public class Editor : MonoBehaviour
             if (b)
                 trues++;
         }
-        Debug.Log("True Grid: " + trues);
+        //Debug.Log("True Grid: " + trues);
 
 
 

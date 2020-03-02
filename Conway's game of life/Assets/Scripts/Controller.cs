@@ -31,7 +31,7 @@ public class Controller : MonoBehaviour
     float holdTime, gapHoldLength;
 
     private void Awake()
-    {
+    { 
         main = this;
     }
     // Start is called before the first frame update
