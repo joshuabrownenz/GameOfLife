@@ -54,8 +54,11 @@ public class Grapher : MonoBehaviour
 
         xAxisDividers.Add(null);
         yAxisDividers.Add(null);
+        joiners.Add(null);
 
         SetUpGraph();
+
+        StartCoroutine(AddValues());
     }
     // Update is called once per frame
     void Update()
@@ -106,6 +109,7 @@ public class Grapher : MonoBehaviour
         CalculateIncrements(rectTransform.rect.width, currentGraph.data.Count, true);
         CalculateIncrements(rectTransform.rect.height, currentGraph.maxYValue, false);
 
+        #region Text and Dividers
         //X Axis and Dividers 
         if (prevXSteps > xSteps)
         {
@@ -182,7 +186,46 @@ public class Grapher : MonoBehaviour
                 }
             }
         }
+        #endregion
 
+        //Points
+        if (currentGraph.data.Count >= points.Count)
+        {
+            for (int i = 0; i < currentGraph.data.Count; i++)
+            {
+                if (i >= points.Count)
+                {
+                    CreatePoint(new Vector2(xGap * i, yGap * currentGraph.data[i]));
+                    CreateJoiner(i);
+                }
+                else
+                {
+                    ModifyPoint(i);
+                    ModifyJoiner(i);
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (i < currentGraph.data.Count)
+                {
+                    GameObject g = points[currentGraph.data.Count];
+                    points.RemoveAt(currentGraph.data.Count);
+                    Destroy(g);
+
+                    g = joiners[currentGraph.data.Count];
+                    joiners.RemoveAt(currentGraph.data.Count);
+                    Destroy(g);
+                }
+                else
+                {
+                    ModifyPoint(i);
+                    ModifyJoiner(i);
+                }
+            }
+        }
     }
 
     void SetUpGraph()
@@ -226,19 +269,13 @@ public class Grapher : MonoBehaviour
         return gameObject;
     }
 
-    GameObject ModifyPoint(Vector2 anchoredPosition)
+    GameObject ModifyPoint(int index)
     {
-        GameObject gameObject = new GameObject("Circle", typeof(Image));
-        gameObject.transform.SetParent(pointsParent, false);
-        gameObject.GetComponent<Image>().sprite = pointSprite;
+        GameObject gameObject = points[index];
 
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = anchoredPosition;
-        rectTransform.sizeDelta = new Vector2(15, 15);
-        rectTransform.anchorMin = new Vector2(0, 0);
-        rectTransform.anchorMax = new Vector2(0, 0);
+        rectTransform.anchoredPosition = new Vector2(xGap * index, yGap * currentGraph.data[index]);
 
-        points.Add(gameObject);
         return gameObject;
     }
 
@@ -266,6 +303,31 @@ public class Grapher : MonoBehaviour
         
 
         joiners.Add(gameObject);
+        return gameObject;
+    }
+
+    GameObject ModifyJoiner(int index)
+    {
+        if (index == 0)
+            return null;
+
+        print("Joiner Index" + index);
+        //GameObject gameObject = new GameObject("Line", typeof(Image));
+        //gameObject.transform.SetParent(joinerParent, false);
+
+        //gameObject.GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+
+        GameObject gameObject = joiners[index];
+
+        Vector2 v1 = new Vector2(xGap * index, yGap * currentGraph.data[index]);
+        Vector2 v2 = new Vector2(xGap * (index - 1), yGap * currentGraph.data[index - 1]);
+        float distance = Vector2.Distance(v1, v2);
+
+        RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
+        rectTransform.anchoredPosition = (v1 + v2) / 2;
+        rectTransform.sizeDelta = new Vector2(distance, 6f);
+        rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Rad2Deg * Mathf.Atan2(v1.y - v2.y, v1.x - v2.x));
+
         return gameObject;
     }
 
@@ -307,7 +369,6 @@ public class Grapher : MonoBehaviour
         if (index == 0 || index >= xSteps)
             return null;
 
-        print("Index: " + index);
         if(index >= xAxisDividers.Count)
         {
             return CreateXAxisDivider(index);
@@ -366,6 +427,17 @@ public class Grapher : MonoBehaviour
         gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(rectTransform.rect.width, 3);
         return gameObject;
     }
+
+    IEnumerator AddValues()
+    {
+        while (true)
+        {
+            Debug.Log("Add Point");
+            currentGraph.AddDataPoint(Random.Range(0, 100));
+            yield return null;
+        }
+    }
+
 }
 
 
@@ -375,14 +447,16 @@ public class Grapher : MonoBehaviour
 [System.Serializable]
 public class GraphData
 {
+    public Grapher grapher;
     public string title;
     public List<int> data;
     public int maxYValue;
 
-    public GraphData(string title, List<int> data)
+    public GraphData(string title, List<int> data, Grapher grapher)
     {
         this.title = title;
         this.data = data;
+        this.grapher = grapher;
 
         data.Sort();
         this.maxYValue = data[data.Count - 1];
@@ -393,6 +467,7 @@ public class GraphData
         data.Add(point);
         if (point > maxYValue)
             maxYValue = point;
+        Grapher.main.AdjustGraph();
     }
 
     public void ReplaceData(List<int> data)
@@ -401,6 +476,7 @@ public class GraphData
 
         data.Sort();
         this.maxYValue = data[data.Count - 1];
+        Grapher.main.AdjustGraph();
     }
 
 }

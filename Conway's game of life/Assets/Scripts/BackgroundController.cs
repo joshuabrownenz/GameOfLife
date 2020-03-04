@@ -15,7 +15,7 @@ public class BackgroundController : MonoBehaviour
     Vector2 initialCanvasDimensions, minSize;
 
     public bool mouseOverBackground, mouseOverForeground;
-    [SerializeField] float grabThreshold;
+    [SerializeField] float grabThreshold, edgeDragThreshold;
 
     bool draging, moving;
     bool overY, cornerSelected;
@@ -198,8 +198,7 @@ public class BackgroundController : MonoBehaviour
 
     void ResizePanel()
     {
-        Vector2 mousePos = Input.mousePosition;
-        mousePos -= new Vector2(canvasDimensions.x / 2, canvasDimensions.y / 2);
+        Cursor.lockState = CursorLockMode.Confined;
         float widthDelta = 0, heightDelta = 0;
         int xMulti = 1, yMulti = 1;
         if (cornerSelected)
@@ -298,13 +297,24 @@ public class BackgroundController : MonoBehaviour
             Cursor.visible = true;
 
         mouseImagePos = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+        Vector3 mousePos = Input.mousePosition;
 
-        mouseDelta = Input.mousePosition - prevMousePos;
+        if (mousePos.x > Screen.width - edgeDragThreshold)
+            mousePos.x = Screen.width - edgeDragThreshold;
+        else if (mousePos.x < edgeDragThreshold)
+            mousePos.x = edgeDragThreshold;
+
+        if (mousePos.y > Screen.height - edgeDragThreshold)
+            mousePos.y = Screen.height - edgeDragThreshold;
+        else if (mousePos.y < edgeDragThreshold)
+            mousePos.y = edgeDragThreshold;
+
+        mouseDelta = mousePos - prevMousePos;
         CheckDrag();
 
         if((moving || draging) && !Input.GetMouseButton(0))
         {
-            
+            Cursor.lockState = CursorLockMode.None;
             print("Cancel Drag");
             draging = false;
             moving = false;
@@ -318,7 +328,7 @@ public class BackgroundController : MonoBehaviour
         {
             MovePanel();
         }
-        prevMousePos = Input.mousePosition;
+        prevMousePos = mousePos;
     }
 
 

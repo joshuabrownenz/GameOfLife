@@ -9,6 +9,8 @@ public class SaveDisplay : MonoBehaviour
 {
     public static SaveDisplay main;
 
+    public static int num;
+
     [SerializeField]
     GameObject cellUI;
 
