@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public class Grapher : MonoBehaviour
 {
-    public static Grapher main;
 
     [SerializeField]
     GameObject xAxisTitlePrefab, yAxisTitlePrefab, xAxisDividerPrefab, yAxisDividerPrefab;
@@ -17,10 +16,10 @@ public class Grapher : MonoBehaviour
 
     Transform pointsParent, joinerParent, xTextParents, yTextParents, xAxisDividerParent, yAxisDividerParent;
 
-    [SerializeField]
+    [SerializeField] public int minGraphValue;
     int yMax, xMax, xSteps, ySteps, yInterval, xInterval;
 
-    List<GameObject> points = new List<GameObject>(), joiners = new List<GameObject>(), xTitles = new List<GameObject>(), yTitles = new List<GameObject>();
+    [SerializeField] List<GameObject> points = new List<GameObject>(), joiners = new List<GameObject>(), xTitles = new List<GameObject>(), yTitles = new List<GameObject>();
     [SerializeField] List<GameObject> xAxisDividers = new List<GameObject>(), yAxisDividers = new List<GameObject>();
 
     [SerializeField]
@@ -34,32 +33,54 @@ public class Grapher : MonoBehaviour
     int[] increments;
 
     [SerializeField]
-    GraphData currentGraph;
+    public GraphData currentGraph;
 
     BackgroundController backgroundController;
 
     RectTransform rectTransform;
+
+    public Statistics.Stat representing = Statistics.Stat.notSelected;
+    private void Awake()
+    {
+        Statistics.main.mostRecentGraph = this;
+    }
+
     void Start()
     {
-        main = this;
         backgroundController = BackgroundController.main;
         rectTransform = GetComponent<RectTransform>();
 
+        #region Parents
         pointsParent = transform.Find("Points");
         joinerParent = transform.Find("Lines");
         xTextParents = transform.Find("X Axis Text");
         yTextParents = transform.Find("Y Axis Text");
         xAxisDividerParent = transform.Find("X Axis Divider");
         yAxisDividerParent = transform.Find("Y Axis Divider");
+        #endregion
 
-        xAxisDividers.Add(null);
-        yAxisDividers.Add(null);
-        joiners.Add(null);
+        AddDefaultObjects();
+
+        currentGraph.grapher = this;
+
+        representing = Statistics.main.typeToBecome;
+        currentGraph.title = Statistics.titles[representing];
+        Statistics.main.graphs[(int)representing] = this;
+        currentGraph.ReplaceDataStart(Statistics.main.stats[(int)representing]);
 
         SetUpGraph();
 
-        StartCoroutine(AddValues());
+
+        //StartCoroutine(AddValues());
     }
+
+    public void AddDefaultObjects()
+    {
+        xAxisDividers.Add(null);
+        yAxisDividers.Add(null);
+        joiners.Add(null);
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -75,14 +96,15 @@ public class Grapher : MonoBehaviour
         {
             index = i;
             totalPoints = Mathf.CeilToInt(points / (float)increments[i]) * increments[i] + increments[i];
-            print(totalPoints);
             if ((length / (totalPoints / increments[i])) > minGap)
             {
-                print("break");
                 break;
             }
 
         }
+
+        if (totalPoints < 10)
+            totalPoints = minGraphValue;
 
         if (isX)
         {
@@ -324,10 +346,18 @@ public class Grapher : MonoBehaviour
         float distance = Vector2.Distance(v1, v2);
 
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = (v1 + v2) / 2;
-        rectTransform.sizeDelta = new Vector2(distance, 6f);
-        rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Rad2Deg * Mathf.Atan2(v1.y - v2.y, v1.x - v2.x));
 
+        if (distance < 7.5f)
+        {
+            rectTransform.anchoredPosition = new Vector2(-1000, -1000);
+        }
+        else
+        {
+
+            rectTransform.anchoredPosition = (v1 + v2) / 2;
+            rectTransform.sizeDelta = new Vector2(distance, 6f);
+            rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Rad2Deg * Mathf.Atan2(v1.y - v2.y, v1.x - v2.x));
+        }
         return gameObject;
     }
 
@@ -417,7 +447,6 @@ public class Grapher : MonoBehaviour
         if (index == 0 || index >= ySteps)
             return null;
 
-        print("Index: " + index);
         if (index >= yAxisDividers.Count)
         {
             return CreateYAxisDivider(index);
@@ -428,11 +457,48 @@ public class Grapher : MonoBehaviour
         return gameObject;
     }
 
+    public void ResetGraph()
+    {
+        foreach(GameObject g in points)
+        {
+            Destroy(g);
+        }
+        points = new List<GameObject>();
+        foreach (GameObject g in joiners)
+        {
+            Destroy(g);
+        }
+        joiners = new List<GameObject>();
+        foreach (GameObject g in xTitles)
+        {
+            Destroy(g);
+        }
+        xTitles = new List<GameObject>();
+        foreach (GameObject g in yTitles)
+        {
+            Destroy(g);
+        }
+        yTitles = new List<GameObject>();
+        foreach (GameObject g in xAxisDividers)
+        {
+            Destroy(g);
+        }
+        xAxisDividers = new List<GameObject>();
+        foreach (GameObject g in yAxisDividers)
+        {
+            Destroy(g);
+        }
+        yAxisDividers = new List<GameObject>();
+
+        AddDefaultObjects();
+        SetUpGraph();
+
+    }
+
     IEnumerator AddValues()
     {
         while (true)
         {
-            Debug.Log("Add Point");
             currentGraph.AddDataPoint(Random.Range(0, 100));
             yield return null;
         }
@@ -450,6 +516,7 @@ public class GraphData
     public Grapher grapher;
     public string title;
     public List<int> data;
+    List<int> sortedData;
     public int maxYValue;
 
     public GraphData(string title, List<int> data, Grapher grapher)
@@ -464,19 +531,49 @@ public class GraphData
     }
     public void AddDataPoint(int point)
     {
-        data.Add(point);
+        Debug.Log("Add Data Point");
+        //data.Add(point);
         if (point > maxYValue)
             maxYValue = point;
-        Grapher.main.AdjustGraph();
+        grapher.AdjustGraph();
     }
 
     public void ReplaceData(List<int> data)
     {
+
+        Debug.Log("Replace Data");
         this.data = data;
 
-        data.Sort();
-        this.maxYValue = data[data.Count - 1];
-        Grapher.main.AdjustGraph();
+        maxYValue = 0;
+        foreach(int i in data)
+        {
+            if (i > maxYValue)
+                maxYValue = i;
+        }
+
+        if (maxYValue < grapher.minGraphValue)
+            maxYValue = grapher.minGraphValue;
+        grapher.AdjustGraph();
+
+        grapher.transform.parent.Find("Title").GetComponent<TextMeshProUGUI>().text = title;
+    }
+    public void ReplaceDataStart(List<int> data)
+    {
+
+        Debug.Log("Replace Data");
+        this.data = data;
+
+        maxYValue = 0;
+        foreach (int i in data)
+        {
+            if (i > maxYValue)
+                maxYValue = i;
+        }
+
+        if (maxYValue < grapher.minGraphValue)
+            maxYValue = grapher.minGraphValue;
+
+        grapher.transform.parent.Find("Title").GetComponent<TextMeshProUGUI>().text = title;
     }
 
 }

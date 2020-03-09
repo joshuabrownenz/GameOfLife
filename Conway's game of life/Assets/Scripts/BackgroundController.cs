@@ -53,6 +53,7 @@ public class BackgroundController : MonoBehaviour
     Vector2 mouseImagePos;
     Texture2D currentCursor;
 
+    Grapher grapher;
     void Awake()
     {
         main = this; 
@@ -60,6 +61,7 @@ public class BackgroundController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        grapher = transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>();
         canvasDimensions.y = Camera.main.pixelHeight;
         canvasDimensions.x = Camera.main.pixelWidth;
 
@@ -279,7 +281,7 @@ public class BackgroundController : MonoBehaviour
 
         //Debug.Log("Yes");
 
-        Grapher.main.AdjustGraph();
+        grapher.AdjustGraph();
     }
 
     void MovePanel()
@@ -372,6 +374,14 @@ public class BackgroundController : MonoBehaviour
         mouseOverForeground = false;
     }
 
+    public void Close()
+    {
+        Statistics.main.graphsOn[(int)transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>().representing] = false;
+        Statistics.main.graphs[(int)transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>().representing] = null;
+        Destroy(transform.parent.gameObject);
+        Destroy(this);
+    }
+
     void OnGUI()
     {
         if (!defaultMouse)
@@ -379,4 +389,5 @@ public class BackgroundController : MonoBehaviour
             GUI.DrawTexture(new Rect(mouseImagePos.x - (w / 2), mouseImagePos.y - (h / 2), w, h), currentCursor);
         }
     }
+
 }

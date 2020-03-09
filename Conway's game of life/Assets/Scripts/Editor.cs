@@ -42,7 +42,8 @@ public class Editor : MonoBehaviour
                 isShift = false;
                 isDragEditing = false;
                 controller.OnEdit();
-
+                Statistics.main.ClearGraphs();
+                Controller.main.CalculateInitialValues();
                 //controller.historyLimit = controller.historyIndex;
             }
             newCoords = GetCoords(newCoords);

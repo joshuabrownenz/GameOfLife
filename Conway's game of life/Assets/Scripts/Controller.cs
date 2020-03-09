@@ -5,42 +5,63 @@ using UnityEngine.Tilemaps;
 
 public class Controller : MonoBehaviour
 {
+    //Instances
     public static Controller main;
+    Statistics statistics;
 
-    [SerializeField]
-    GameObject cell;
-
+    [Header("Constants")]
     [SerializeField]
     public Vector2Int size;
     [SerializeField]
-    public bool[,] grid {get; private set;}
-    bool[,] newGrid;
-    public SpriteRenderer[,] spriteRenderers;
-    public bool start, running;
-    [HideInInspector]
-    public bool click;
-
-    public bool[][,] history = new bool[100][,];
-    public int historyIndex = 0;
-    public int historyLimit = 0;
-
-    bool arrowHold;
-    float holdStartTime;
-    float holdRunTime;
+    public bool recordStats;
     [SerializeField]
     float holdTime, gapHoldLength;
 
+    [Header("Prefabs")]
+    [SerializeField]
+    GameObject cell;
+
+    //Relates to the grid arrays
+    public bool[,] grid {get; private set;}
+    bool[,] newGrid;
+    public SpriteRenderer[,] spriteRenderers;
+
+    [Header("States")]
+    [SerializeField]
+    public bool start;
+    public bool running;
+
+    //History
+    public bool[][,] history = new bool[100][,];
+    [Header("History")]
+    public int historyIndex = 0;
+    public int historyLimit = 0;
+    bool arrowHold;
+    float holdStartTime;
+    float holdRunTime;
+    
+    //Time Values
+    float timeOfCompute;
+
     private void Awake()
-    { 
+    {
+        //Start Singleton
         main = this;
     }
-    // Start is called before the first frame update
 
     void Start()
     {
+        //Assign Statistics main instance
+        statistics = Statistics.main;
+
+        //Set size of multidimentional array
         grid = new bool[size.x + 2, size.y + 2];
         spriteRenderers = new SpriteRenderer[size.x + 2, size.y + 2];
+
+        //Create Parent of cells
         GameObject parent = new GameObject("Grid");
+
+        //
         for (int y = 1; y <= size.y; y++)
         {
             for (int x = 1; x <= size.x; x++)
@@ -149,14 +170,38 @@ public class Controller : MonoBehaviour
 
     IEnumerator compute()
     {
+        Statistics.main.framesPerSecond = 1f / (Time.time - timeOfCompute);
+        timeOfCompute = Time.time;
         running = true;
-        CalculateNewGrid();
+        if (Statistics.main.stats[0].Count == 0)
+        {
+            CalculateInitialValues();
+        }
+        if (!recordStats)
+            CalculateNewGrid();
+        else
+            CalculateNewGridWithStats();
         RenderGrid();
         yield return null;
         running = false;
     }
 
+    public void CalculateInitialValues()
+    {
+        Statistics.main.stats[(int)Statistics.Stat.deaths].Add(0);
+        Statistics.main.stats[(int)Statistics.Stat.births].Add(0);
 
+        int alive = 0;
+        for (int y = 1; y <= size.y; y++)
+        {
+            for (int x = 1; x <= size.x; x++)
+            {
+                if (grid[x, y])
+                    alive++;
+            }
+        }
+        Statistics.main.stats[(int)Statistics.Stat.aliveCells].Add(alive);
+    }
     void CalculateNewGrid()
     {
         newGrid = new bool[size.x + 2, size.y + 2];
@@ -188,6 +233,64 @@ public class Controller : MonoBehaviour
                 }
             }
         }
+
+        AddToHistoryIndex();
+
+        history[historyIndex] = newGrid;
+
+    }
+
+    void CalculateNewGridWithStats()
+    {
+        int deaths = 0, births = 0 , alive = 0;
+        newGrid = new bool[size.x + 2, size.y + 2];
+        for (int y = 1; y <= size.y; y++)
+        {
+            for (int x = 1; x <= size.x; x++)
+            {
+                switch (checkSquares(x, y))
+                {
+                    case 0:
+                        newGrid[x, y] = false;
+                        if (grid[x, y])
+                            deaths++;
+                        break;
+                    case 1:
+                        newGrid[x, y] = false;
+                        if (grid[x, y])
+                            deaths++;
+                        break;
+                    case 2:
+                        if (grid[x, y])
+                        {
+                            newGrid[x, y] = true;
+                            alive++;
+                        }
+                        else
+                            newGrid[x, y] = false;
+                        break;
+                    case 3:
+                        newGrid[x, y] = true;
+                        alive++;
+                        if (!grid[x,y])
+                        {
+                            births++;
+                        }
+                        break;
+                    case 4:
+                        newGrid[x, y] = false;
+                        if (grid[x, y])
+                            deaths++;
+                        break;
+
+                }
+            }
+        }
+
+        statistics.AddValue(deaths, Statistics.Stat.deaths);
+        statistics.AddValue(births, Statistics.Stat.births);
+        statistics.AddValue(alive, Statistics.Stat.aliveCells);
+
 
         AddToHistoryIndex();
 
@@ -344,14 +447,15 @@ public class Controller : MonoBehaviour
             tempHistoryIndex = 99;
         }
 
-        if(tempHistoryIndex == historyLimit)
+        if (tempHistoryIndex == historyLimit)
         {
             return;
         }
-       
+
         newGrid = history[tempHistoryIndex];
 
         historyIndex = tempHistoryIndex;
+        Statistics.main.DeleteLast();
         RenderGrid();
 
         

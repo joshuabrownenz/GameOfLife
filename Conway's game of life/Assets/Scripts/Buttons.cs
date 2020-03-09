@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -57,7 +58,9 @@ public class Buttons : MonoBehaviour
         stopButton.gameObject.SetActive(false);
         controller.start = false;
         controller.Clear();
-        
+
+        Statistics.main.ClearGraphs();
+
     }
 
     public void RandomCells()
