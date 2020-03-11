@@ -42,7 +42,6 @@ public class Grapher : MonoBehaviour
     public Statistics.Stat representing = Statistics.Stat.notSelected;
     private void Awake()
     {
-        Statistics.main.mostRecentGraph = this;
     }
 
     void Start()
@@ -53,10 +52,10 @@ public class Grapher : MonoBehaviour
         #region Parents
         pointsParent = transform.Find("Points");
         joinerParent = transform.Find("Lines");
-        xTextParents = transform.Find("X Axis Text");
-        yTextParents = transform.Find("Y Axis Text");
-        xAxisDividerParent = transform.Find("X Axis Divider");
-        yAxisDividerParent = transform.Find("Y Axis Divider");
+        xTextParents = transform.parent.Find("X Axis Text");
+        yTextParents = transform.parent.Find("Y Axis Text");
+        xAxisDividerParent = transform.parent.Find("X Axis Divider");
+        yAxisDividerParent = transform.parent.Find("Y Axis Divider");
         #endregion
 
         AddDefaultObjects();

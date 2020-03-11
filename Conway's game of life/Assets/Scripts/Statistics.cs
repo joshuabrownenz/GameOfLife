@@ -9,7 +9,6 @@ public class Statistics : MonoBehaviour
     public List<int>[] stats = new List<int>[3];
     public bool[] graphsOn = new bool[3];
     public Grapher[] graphs = new Grapher[3];
-    public Grapher mostRecentGraph;
     [SerializeField] List<int> deaths;
     public Stat typeToBecome = Stat.notSelected;
     public float framesPerSecond;

@@ -19,7 +19,7 @@ public class SaveController : MonoBehaviour
     void Start()
     {
         controller = Controller.main;
-        NamePanel = transform.parent.Find("OpenPanel").Find("SaveName").gameObject;
+        NamePanel = transform.parent.parent.Find("OpenPanel").Find("SaveName").gameObject;
         NamePanel.SetActive(false);
     }
     

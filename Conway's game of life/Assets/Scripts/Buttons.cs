@@ -20,15 +20,15 @@ public class Buttons : MonoBehaviour
         editor = Editor.main;
         #region StartStop
         controller = Controller.main;
-        startButton = transform.Find("Start").GetComponent<Button>();
-        stopButton = transform.Find("Stop").GetComponent<Button>();
+        startButton = transform.Find("Buttons").Find("Start").GetComponent<Button>();
+        stopButton = transform.Find("Buttons").Find("Stop").GetComponent<Button>();
         startText = startButton.transform.Find("Text").GetComponent<Text>();
         startButton.onClick.AddListener(() => StartButton());
         stopButton.onClick.AddListener(() => StopButton());
         startText.text = "Start";
         stopButton.gameObject.SetActive(false);
         #endregion
-        clear = transform.Find("Clear").GetComponent<Button>();
+        clear = transform.Find("Buttons").Find("Clear").GetComponent<Button>();
         clear.onClick.AddListener(() => Clear());
     }
 

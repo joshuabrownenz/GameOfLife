@@ -46,7 +46,7 @@ public class BackgroundController : MonoBehaviour
     [SerializeField]
     Texture2D mouseTopBottom, mouseDiagonal, mouseDiagonalMirror, mouseMove;
 
-    bool defaultMouse = true;
+    [SerializeField] bool defaultMouse = true;
     int w = 60;
     int h = 60;
 
@@ -61,6 +61,12 @@ public class BackgroundController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        defaultMouse = true;
+        moving = false;
+        draging = false;
+
+       
+
         grapher = transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>();
         canvasDimensions.y = Camera.main.pixelHeight;
         canvasDimensions.x = Camera.main.pixelWidth;
@@ -86,6 +92,7 @@ public class BackgroundController : MonoBehaviour
 
         if (mouseOverBackground && !mouseOverForeground)
         {
+            print("It's over when it's not meant to be");
             overLeft = mousePos.x < backgroundPanel.anchoredPosition.x - backgroundPanel.sizeDelta.x / 2 + grabThreshold;
             overRight = mousePos.x > backgroundPanel.anchoredPosition.x + backgroundPanel.sizeDelta.x / 2 - grabThreshold;
 
@@ -200,7 +207,6 @@ public class BackgroundController : MonoBehaviour
 
     void ResizePanel()
     {
-        Cursor.lockState = CursorLockMode.Confined;
         float widthDelta = 0, heightDelta = 0;
         int xMulti = 1, yMulti = 1;
         if (cornerSelected)
@@ -292,7 +298,6 @@ public class BackgroundController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Cursor.lockState = CursorLockMode.Confined;
         if (!defaultMouse)
             Cursor.visible = false;
         else
@@ -316,8 +321,6 @@ public class BackgroundController : MonoBehaviour
 
         if((moving || draging) && !Input.GetMouseButton(0))
         {
-            Cursor.lockState = CursorLockMode.None;
-            print("Cancel Drag");
             draging = false;
             moving = false;
             defaultMouse = true;
@@ -378,6 +381,8 @@ public class BackgroundController : MonoBehaviour
     {
         Statistics.main.graphsOn[(int)transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>().representing] = false;
         Statistics.main.graphs[(int)transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>().representing] = null;
+        defaultMouse = true;
+        Cursor.visible = true;
         Destroy(transform.parent.gameObject);
         Destroy(this);
     }

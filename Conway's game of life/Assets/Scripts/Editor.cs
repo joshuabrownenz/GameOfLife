@@ -48,7 +48,7 @@ public class Editor : MonoBehaviour
             }
             newCoords = GetCoords(newCoords);
 
-            if (Input.GetMouseButtonDown(0) && EventSystem.current.currentSelectedGameObject == null && !savePlacer.justPlaced)
+            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && !savePlacer.justPlaced)
             {
                 editedSquares = new List<Vector2Int>();
                 isDragEditing = true;
@@ -68,7 +68,7 @@ public class Editor : MonoBehaviour
                 editedSquares.Add(enterCoords);
             }
 
-            if (Input.GetMouseButton(0) && EventSystem.current.currentSelectedGameObject == null && isDragEditing)
+            if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject() && isDragEditing)
             {
                 if (!editedSquares.Contains(newCoords))
                 {
@@ -77,7 +77,7 @@ public class Editor : MonoBehaviour
                 }
             }
 
-            if (Input.GetMouseButton(0) && EventSystem.current.currentSelectedGameObject == null && isShift)
+            if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject() && isShift)
             {
                 Vector2Int vector = enterCoords - newCoords;
                 vector *= -1;

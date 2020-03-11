@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
 public class Controller : MonoBehaviour
 {
@@ -16,6 +17,8 @@ public class Controller : MonoBehaviour
     public bool recordStats;
     [SerializeField]
     float holdTime, gapHoldLength;
+    [SerializeField]
+    Slider slider;
 
     [Header("Prefabs")]
     [SerializeField]
@@ -61,7 +64,7 @@ public class Controller : MonoBehaviour
         //Create Parent of cells
         GameObject parent = new GameObject("Grid");
 
-        //
+        //Create Every Cell
         for (int y = 1; y <= size.y; y++)
         {
             for (int x = 1; x <= size.x; x++)
@@ -74,6 +77,8 @@ public class Controller : MonoBehaviour
                 obj.GetComponent<CellContainer>().position = new Vector2Int(x, y);
             }
         }
+
+        //Assign outside cells as false
         for (int x = 0; x <= size.x; x++)
         {
             grid[x, 0] = false;
@@ -92,41 +97,31 @@ public class Controller : MonoBehaviour
         }
         newGrid = grid;
 
-        //for(int y = 1; y <= 100; y++)
-        //{
-        //    for (int x = 1; x <= 100; x++)
-        //    {
-        //        int num = y * 99 + x;
-        //        if(num%2 == 0)
-        //            newGrid[x, y] = true;
-        //    }
-        //}
-
+        //Set all the cells to the correct colour
         RenderGrid();
 
+        //Assign array of Multidimentional array as the right size
         for (int i = 0; i < 100; i++)
         {
             history[i] = new bool[size.x + 2, size.y + 2];
         }
-
-
-       
-
     }
 
-    // Update is called once per frame
     void Update()
     {
         if(start)
         {
             if (!running)
             {
+                //If it is meant to run and it is not already running run main compute coroutine
                 StartCoroutine(compute());
             }
         }
         else
         {
-            if(Input.GetKeyUp(KeyCode.RightArrow) ||  Input.GetKeyUp(KeyCode.LeftArrow))
+            //Detect Left and Right arrow Key Press as well as hold
+            #region Detect Left and Right Arrow Press
+            if (Input.GetKeyUp(KeyCode.RightArrow) ||  Input.GetKeyUp(KeyCode.LeftArrow))
             {
                 arrowHold = false;
             }
@@ -156,41 +151,50 @@ public class Controller : MonoBehaviour
                 }
                 holdRunTime = Time.time;
             }
-
-            //if ((Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand)) && Input.GetKeyDown(KeyCode.Z))
-            //{
-            //    arrowHold = true;
-            //    holdStartTime = Time.time;
-            //    CtrlZ();
-            //}
-
-
+            #endregion
         }
     }
 
     IEnumerator compute()
     {
+        running = true;
+        //Calculate frame rate 
         Statistics.main.framesPerSecond = 1f / (Time.time - timeOfCompute);
         timeOfCompute = Time.time;
-        running = true;
+
+        //If stats has no entry then calculate intial values
         if (Statistics.main.stats[0].Count == 0)
         {
             CalculateInitialValues();
         }
+
+        //Work out the new grid
         if (!recordStats)
             CalculateNewGrid();
         else
             CalculateNewGridWithStats();
+
+        //Display grid
         RenderGrid();
-        yield return null;
+
+        //Wait for the amount of time the slider dictates
+        for (int i = 0; i < slider.value; i++)
+        {
+            yield return null;
+        }
+
         running = false;
+
+        
     }
 
     public void CalculateInitialValues()
     {
+        //Asign deaths and births value to 0
         Statistics.main.stats[(int)Statistics.Stat.deaths].Add(0);
         Statistics.main.stats[(int)Statistics.Stat.births].Add(0);
 
+        //Find alive cells
         int alive = 0;
         for (int y = 1; y <= size.y; y++)
         {
@@ -200,15 +204,21 @@ public class Controller : MonoBehaviour
                     alive++;
             }
         }
+        //Assign alive cells
         Statistics.main.stats[(int)Statistics.Stat.aliveCells].Add(alive);
     }
+
     void CalculateNewGrid()
     {
+        //Create clear new grid to hold all changes
         newGrid = new bool[size.x + 2, size.y + 2];
+
+        //Go through every cell but the outside ones 
         for (int y = 1; y <= size.y; y++)
         {
             for (int x = 1; x <= size.x; x++)
             {
+                //Check every cells neighbours and apply rules
                 switch (checkSquares(x, y))
                 {
                     case 0:
@@ -234,12 +244,17 @@ public class Controller : MonoBehaviour
             }
         }
 
+        //Adjust value of history index
         AddToHistoryIndex();
 
-        history[historyIndex] = newGrid;
+        //Add grid to history
+        object tempGrid = grid.Clone();
+
+        history[historyIndex] = (bool[,])tempGrid;
 
     }
 
+    //Same as before just recording statistics as well
     void CalculateNewGridWithStats()
     {
         int deaths = 0, births = 0 , alive = 0;
@@ -294,7 +309,9 @@ public class Controller : MonoBehaviour
 
         AddToHistoryIndex();
 
-        history[historyIndex] = newGrid;
+        object tempGrid = grid.Clone();
+
+        history[historyIndex] = (bool[,])tempGrid;
 
     }
 
@@ -418,7 +435,9 @@ public class Controller : MonoBehaviour
 
     public void RightMove()
     {
-        history[historyIndex] = grid;
+        object tempGrid = grid.Clone();
+
+        history[historyIndex] = (bool[,])tempGrid;
         StartCoroutine(compute());
 
         //if (historyIndex == historyLimit)
@@ -452,6 +471,7 @@ public class Controller : MonoBehaviour
             return;
         }
 
+
         newGrid = history[tempHistoryIndex];
 
         historyIndex = tempHistoryIndex;
@@ -471,9 +491,11 @@ public class Controller : MonoBehaviour
 
     public void OnEdit()
     {
-
-
         AddToHistoryIndex();
+
+        object tempGrid = grid.Clone();
+
+        history[historyIndex] = (bool[,])tempGrid;
 
         //bool[,] tempGrid = new bool[size.x + 1, size.y];
 
@@ -485,9 +507,9 @@ public class Controller : MonoBehaviour
         //    }
         //}
 
-        object tempGrid = grid.Clone();
 
-        history[historyIndex] = (bool[,])tempGrid;
+
+
 
     }
 }
