@@ -24,8 +24,8 @@ public class LoadCamera : MonoBehaviour
         controller = Controller.main;
         //transform.position = new Vector3((controller.size.x) / 4f,( controller.size.y)/ 4f, -5);
         transform.position = new Vector3(0, 0, -5);
-        scrollLimits.y = controller.size.y / 4 + 1;
-        float scrollTest = controller.size.x / (4 * (16 / 9f)) + 1 ;
+        scrollLimits.y = controller.size.y / 4 + 0.02f * controller.size.x;
+        float scrollTest = controller.size.x / (4 * (16 / 9f)) + 0.02f * controller.size.x;
         if (scrollTest > scrollLimits.y)
             scrollLimits.y = scrollTest;
     }

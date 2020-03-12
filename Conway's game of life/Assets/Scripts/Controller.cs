@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -35,6 +36,8 @@ public class Controller : MonoBehaviour
     public bool running;
 
     //History
+    MaxStack historyStack = new MaxStack(100);
+    Stack<bool[,]> redoStack = new Stack<bool[,]>();
     public bool[][,] history = new bool[100][,];
     [Header("History")]
     public int historyIndex = 0;
@@ -54,6 +57,7 @@ public class Controller : MonoBehaviour
 
     void Start()
     {
+
         //Assign Statistics main instance
         statistics = Statistics.main;
 
@@ -119,9 +123,9 @@ public class Controller : MonoBehaviour
         }
         else
         {
-            //Detect Left and Right arrow Key Press as well as hold
-            #region Detect Left and Right Arrow Press
-            if (Input.GetKeyUp(KeyCode.RightArrow) ||  Input.GetKeyUp(KeyCode.LeftArrow))
+            //Detect Key presses as well as hold
+            #region Detect Key presses
+            if (Input.GetKeyUp(KeyCode.RightArrow) || Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.Z)) 
             {
                 arrowHold = false;
             }
@@ -132,11 +136,17 @@ public class Controller : MonoBehaviour
                 holdStartTime = Time.time;
                 RightMove();
             }
-            if(Input.GetKeyDown(KeyCode.LeftArrow))
+            if(Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.Z))
             {
                 arrowHold = true;
                 holdStartTime = Time.time;
                 LeftMove();
+            }
+            if(Input.GetKeyDown(KeyCode.X))
+            {
+                arrowHold = true;
+                holdStartTime = Time.time;
+                Redo();
             }
 
             if (arrowHold && ((holdStartTime + holdTime) < Time.time) && ((holdRunTime + gapHoldLength) < Time.time))
@@ -145,7 +155,7 @@ public class Controller : MonoBehaviour
                 {
                     RightMove();
                 } 
-                else if(Input.GetKey(KeyCode.LeftArrow))
+                else if(Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.Z))
                 {
                     LeftMove();
                 }
@@ -161,6 +171,10 @@ public class Controller : MonoBehaviour
         //Calculate frame rate 
         Statistics.main.framesPerSecond = 1f / (Time.time - timeOfCompute);
         timeOfCompute = Time.time;
+
+        //Clear redo data
+        redoStack.Clear();
+        Statistics.main.redoData.Clear();
 
         //If stats has no entry then calculate intial values
         if (Statistics.main.stats[0].Count == 0)
@@ -248,9 +262,8 @@ public class Controller : MonoBehaviour
         AddToHistoryIndex();
 
         //Add grid to history
-        object tempGrid = grid.Clone();
-
-        history[historyIndex] = (bool[,])tempGrid;
+        historyStack.Push((bool[,])grid.Clone());
+        print("Count is: " + historyStack.Count);
 
     }
 
@@ -309,9 +322,12 @@ public class Controller : MonoBehaviour
 
         AddToHistoryIndex();
 
-        object tempGrid = grid.Clone();
 
-        history[historyIndex] = (bool[,])tempGrid;
+        historyStack.Push((bool[,])grid.Clone());
+        print("Count is: " + historyStack.Count);
+        //history[historyIndex] = (bool[,])tempGrid;
+
+        //historyStack.Push((bool[,])grid.Clone());
 
     }
 
@@ -416,7 +432,7 @@ public class Controller : MonoBehaviour
             {
                 for (int x = 1; x <= size.x; x++)
                 {
-                    int rand = Random.Range(1, 3);
+                    int rand = UnityEngine.Random.Range(1, 3);
                     if (rand == 1)
                         newGrid[x, y] = true;
                 }
@@ -428,16 +444,17 @@ public class Controller : MonoBehaviour
 
     public void Clear()
     {
+        OnEdit();
         newGrid = new bool[size.x + 2, size.y + 2];
         RenderGrid();
-        OnEdit();
     }
 
     public void RightMove()
     {
-        object tempGrid = grid.Clone();
+        historyStack.Push((bool[,])grid.Clone());
+        //object tempGrid = grid.Clone();
 
-        history[historyIndex] = (bool[,])tempGrid;
+        //history[historyIndex] = (bool[,])tempGrid;
         StartCoroutine(compute());
 
         //if (historyIndex == historyLimit)
@@ -457,24 +474,48 @@ public class Controller : MonoBehaviour
 
     }
 
+    public void Redo()
+    {
+        if(redoStack.Count != 0)
+        {
+            historyStack.Push((bool[,])grid.Clone());
+            newGrid = redoStack.Pop();
+            RenderGrid();
+
+            if (Statistics.main.redoData.Count != 0)
+            {
+                Vector3Int data = Statistics.main.redoData.Pop();
+
+                statistics.AddValue(data.x, Statistics.Stat.deaths);
+                statistics.AddValue(data.y, Statistics.Stat.births);
+                statistics.AddValue(data.z, Statistics.Stat.aliveCells);
+            }
+        }
+    }
+
     public void LeftMove()
     {
-        int tempHistoryIndex = historyIndex - 1;
+        //int tempHistoryIndex = historyIndex - 1;
 
-        if(tempHistoryIndex < 0)
-        {
-            tempHistoryIndex = 99;
-        }
+        //if(tempHistoryIndex < 0)
+        //{
+        //    tempHistoryIndex = 99;
+        //}
 
-        if (tempHistoryIndex == historyLimit)
-        {
-            return;
-        }
+        //if (tempHistoryIndex == historyLimit)
+        //{
+        //    return;
+        //}
 
 
-        newGrid = history[tempHistoryIndex];
 
-        historyIndex = tempHistoryIndex;
+
+        //historyIndex = tempHistoryIndex;
+
+        redoStack.Push((bool[,])grid.Clone());
+        newGrid = historyStack.Pop();
+        
+
         Statistics.main.DeleteLast();
         RenderGrid();
 
@@ -491,11 +532,15 @@ public class Controller : MonoBehaviour
 
     public void OnEdit()
     {
-        AddToHistoryIndex();
+        redoStack.Clear();
+        Statistics.main.redoData.Clear();
 
-        object tempGrid = grid.Clone();
+        historyStack.Push((bool[,])grid.Clone());
+        //AddToHistoryIndex();
 
-        history[historyIndex] = (bool[,])tempGrid;
+        //object tempGrid = grid.Clone();
+
+        //history[historyIndex] = (bool[,])tempGrid;
 
         //bool[,] tempGrid = new bool[size.x + 1, size.y];
 
@@ -508,8 +553,120 @@ public class Controller : MonoBehaviour
         //}
 
 
+    }
 
 
+    //!!!!This is not my code it was borrowed from https://ntsblog.homedev.com.au/index.php/2010/05/06/c-stack-with-maximum-limit/!!!
+
+    /// <summary>
+    /// Generic stack implementation with a maximum limit
+    /// When something is pushed on the last item is removed from the list
+    /// </summary>
+    [Serializable]
+    public class MaxStack
+    {
+        #region Fields
+
+        private int _limit;
+        private LinkedList<bool[,]> _list;
+
+        #endregion
+
+        #region Constructors
+
+        public MaxStack(int maxSize)
+        {
+            _limit = maxSize;
+            _list = new LinkedList<bool[,]>();
+
+        }
+
+        #endregion
+
+        #region Public Stack Implementation
+
+        public void Push(bool[,] value)
+        {
+            if (_list.Count == _limit)
+            {
+                _list.RemoveLast();
+            }
+            _list.AddFirst(value);
+        }
+
+        public bool[,] Pop()
+        {
+            if (_list.Count > 0)
+            {
+                bool[,] value = _list.First.Value;
+                _list.RemoveFirst();
+                return value;
+            }
+            else
+            {
+
+                return new bool[Controller.main.size.x + 2, Controller.main.size.y + 2];
+            }
+
+
+        }
+
+        public bool[,] Peek()
+        {
+            if (_list.Count > 0)
+            {
+                bool[,] value = _list.First.Value;
+                return value;
+            }
+            else
+            {
+                throw new InvalidOperationException("The Stack is empty");
+            }
+
+        }
+
+        public void Clear()
+        {
+            _list.Clear();
+
+        }
+
+        public int Count
+        {
+            get { return _list.Count; }
+        }
+
+        /// <summary>
+        /// Checks if the top object on the stack matches the value passed in
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool IsTop(bool[,] value)
+        {
+            bool result = false;
+            if (this.Count > 0)
+            {
+                result = Peek().Equals(value);
+            }
+            return result;
+        }
+
+        public bool Contains(bool[,] value)
+        {
+            bool result = false;
+            if (this.Count > 0)
+            {
+                result = _list.Contains(value);
+            }
+            return result;
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return _list.GetEnumerator();
+        }
+
+        #endregion
 
     }
 }

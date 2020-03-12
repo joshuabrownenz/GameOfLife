@@ -37,11 +37,11 @@ public class Editor : MonoBehaviour
         {
             if(Input.GetMouseButtonUp(0) && (isDragEditing || isShift) && !savePlacer.justPlaced)
             {
-                
+                controller.OnEdit();
+
                 saveEdits();
                 isShift = false;
                 isDragEditing = false;
-                controller.OnEdit();
                 Statistics.main.ClearGraphs();
                 Controller.main.CalculateInitialValues();
                 //controller.historyLimit = controller.historyIndex;

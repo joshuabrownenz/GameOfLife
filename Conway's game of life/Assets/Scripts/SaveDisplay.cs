@@ -21,7 +21,7 @@ public class SaveDisplay : MonoBehaviour
     GameObject rightArrow, leftArrow;
     [SerializeField]
     GameObject[] optionImages;
-    Button[] buttons = new Button[6];
+    Button[] buttons = new Button[6], deleteButtons = new Button[6];
     Button[] loadButtons = new Button[6];
     [SerializeField]
     Vector2 startPosition;
@@ -29,10 +29,10 @@ public class SaveDisplay : MonoBehaviour
     Vector2 finalPosition;
     [SerializeField]
     float moveSpeed;
-    GameObject openPanel;
+    GameObject openPanel, deletePanel;
     bool[] large;
     bool open;
-
+    int readyToDelete;
     Text openButtonText;
     private void Start()
     {
@@ -41,10 +41,13 @@ public class SaveDisplay : MonoBehaviour
         openButtonText = transform.parent.Find("Open").Find("Text").GetComponent<Text>();
         openPanel = transform.Find("OpenPanel").gameObject;
         openPanel.SetActive(false);
+        deletePanel = transform.Find("DeletePanel").gameObject;
+        deletePanel.SetActive(false);
 
         for (int i = 0; i < 6; i++)
         {
             buttons[i] = transform.Find("OpenPanel").Find("Options").Find("Option " + (i + 1)).Find("Button").GetComponent<Button>();
+            deleteButtons[i] = transform.Find("OpenPanel").Find("Options").Find("Option " + (i + 1)).Find("Delete").GetComponent<Button>();
             loadButtons[i] = transform.Find("OpenPanel").Find("Options").Find("Option " + (i + 1)).Find("Load").GetComponent<Button>();
         }
 
@@ -161,15 +164,16 @@ public class SaveDisplay : MonoBehaviour
         for(int i = 0; i < 6; i++)
         {
             buttons[i].gameObject.SetActive(beingUsed[i]);
+            deleteButtons[i].gameObject.SetActive(beingUsed[i]);
             loadButtons[i].gameObject.SetActive(large[i]);
         }
         
     }
 
+
     public void LoadLargeGrid(int option)
     {
-
-        buttons[option -  1].transform.Find("Text").GetComponent<Text>().text = saves[option - 1].name;
+        buttons[option -  1].transform.Find("Text").GetComponent<Text>().text = saves[option + (page - 1) * 6 - 1].name;
 
         bool[,] optionGrid = saves[option + (page - 1) * 6 - 1].saveGrid;
         int largeLength;
@@ -233,25 +237,64 @@ public class SaveDisplay : MonoBehaviour
 
     public void Open()
     {
-        if(open)
+        if (!SaveController.main.saveMode)
         {
-            //Close
-            open = false;
-            openButtonText.text = "Open";
-            StopAllCoroutines();
-            StartCoroutine(movePanel());
+            if (open)
+            {
+                //Close
+                open = false;
+                openButtonText.text = "Open";
+                StopAllCoroutines();
+                StartCoroutine(movePanel());
+
+            }
+            else
+            {
+                //Open
+                open = true;
+                openButtonText.text = "Close";
+                StopAllCoroutines();
+                StartCoroutine(movePanel());
+            }
+        }
+
+    }
+    public void DeleteSaves(int option)
+    {
+        readyToDelete = option + (page - 1) * 6 - 1;
+        deletePanel.SetActive(true);
+    }
+    public void CloseDeletePanel()
+    {
+        deletePanel.SetActive(false);
+    }
+    public void DeleteSavesConfirmed()
+    {
+        SaveData[] newData = new SaveData[saves.Length - 1];
+        bool skipped = false;
+        int index = 0;
+
+        print("Option: " + readyToDelete);
+        for (int i = 0; i < saves.Length; i++)
+        {
             
-        }
-        else
-        {
-            //Open
-            open = true;
-            openButtonText.text = "Close";
-            StopAllCoroutines();
-            StartCoroutine(movePanel());
+            if (i == readyToDelete && !skipped)
+            {
+                skipped = true;
+                continue;
+            }
+            print("Index: " + index);
+            print("I: " + i);
+            newData[index] = saves[i];
+
+            index++;
         }
 
+        deletePanel.SetActive(false);
+        saves = newData;
+        RenderOptions();
 
+        SaveToFile();
     }
 
     IEnumerator movePanel()

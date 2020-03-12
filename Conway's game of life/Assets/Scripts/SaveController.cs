@@ -1,20 +1,26 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class SaveController : MonoBehaviour
 {
+    public static SaveController main;
 
     Vector2Int enterCoords;
     Controller controller;
-    bool saveMode;
+    public bool saveMode;
     GameObject NamePanel;
     bool awaitingName;
     bool[,] grid;
     bool selecting;
     Vector2Int prevCoords;
     GameObject selectParent;
+    private void Awake()
+    {
+        main = this;
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -27,7 +33,7 @@ public class SaveController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!awaitingName && saveMode)
+        if (!awaitingName && saveMode && !EventSystem.current.IsPointerOverGameObject())
         {
             Vector2Int coords = GetCoords();
             if (Input.GetMouseButtonDown(0))
@@ -204,6 +210,7 @@ public class SaveController : MonoBehaviour
 
     public void Cancel()
     {
+        GetComponent<Image>().color = Color.white;
         NamePanel.SetActive(false);
         Editor.main.allowEditing = true;
         awaitingName = false;
@@ -215,6 +222,11 @@ public class SaveController : MonoBehaviour
 
     public void ActivateSaves()
     {
+        if (!saveMode)
+            GetComponent<Image>().color = Color.yellow;
+        else
+            GetComponent<Image>().color = Color.white;
+
         saveMode = !saveMode;
         Editor.main.allowEditing = !saveMode;
     }

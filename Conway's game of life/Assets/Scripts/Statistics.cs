@@ -12,6 +12,9 @@ public class Statistics : MonoBehaviour
     [SerializeField] List<int> deaths;
     public Stat typeToBecome = Stat.notSelected;
     public float framesPerSecond;
+    public Stack<Vector3Int> redoData = new Stack<Vector3Int>();
+
+
     public void AddValue(int value, Stat dataSet)
     {
         stats[(int)dataSet].Add(value);
@@ -93,6 +96,9 @@ public class Statistics : MonoBehaviour
 
     public void DeleteLast()
     {
+        if(stats[0].Count != 0)
+            redoData.Push(new Vector3Int(stats[0][stats[0].Count - 1], stats[1][stats[1].Count - 1], stats[2][stats[2].Count - 1]));
+
         for (int i = 0; i < stats.Length; i++)
         {
             if(stats[i].Count != 0)

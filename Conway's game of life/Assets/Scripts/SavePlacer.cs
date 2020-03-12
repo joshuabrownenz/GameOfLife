@@ -53,6 +53,7 @@ public class SavePlacer : MonoBehaviour
 
     void PlaceGrid(Vector2Int coords)
     {
+        Controller.main.OnEdit();
         for (int y = 0; y < grid.GetLength(1); y++)
         {
             for (int x = 0; x < grid.GetLength(0); x++)
