@@ -5,94 +5,104 @@ using UnityEngine.UI;
 
 public class BackgroundController : MonoBehaviour
 {
+    //Singleton Instance
     public static BackgroundController main; 
 
-
+    //Instances
     RectTransform backgroundPanel;
-    
-    public Vector2 canvasDimensions;
-    [SerializeField]
-    Vector2 initialCanvasDimensions, minSize;
+    Grapher grapher;
 
-    public bool mouseOverBackground, mouseOverForeground;
-    [SerializeField] float grabThreshold, edgeDragThreshold;
+    [Header("Set Dimentions")]
+    [SerializeField] Vector2 initialCanvasDimensions;
+    [SerializeField] Vector2 minSize;
+    Vector2 canvasDimensions;
 
+    [Header("Grab Prefrences")]
+    [SerializeField] float grabThreshold;
+    [SerializeField] float edgeDragThreshold;
+
+    //Mouse states
+    [HideInInspector] public bool mouseOverBackground, mouseOverForeground;
     bool draging, moving;
     bool overY, cornerSelected;
-    Corner corner;
-    Side side;
 
-    Vector2 mouseDelta;
-    Vector3 prevMousePos;
-
+    #region Enums
     enum Side
     {
-        Top,
-        Right,
-        Bottom,
-        Left
+        Top, Right, Bottom, Left
     }
     enum Corner
     {
-        TR,
-        TL,
-        BR,
-        BL
+        TR, TL, BR, BL
     }
+    #endregion
+
+    //Current hover selection
+    Corner corner;
+    Side side;
+
+    //Mouse data
+    Vector2 mouseDelta;
+    Vector3 prevMousePos;
+
 
     [Header("Cursor Images")]
-    [SerializeField]
-    Texture2D mouseLeftRight;
-    [SerializeField]
-    Texture2D mouseTopBottom, mouseDiagonal, mouseDiagonalMirror, mouseMove;
+    [SerializeField] Texture2D mouseLeftRight;
+    [SerializeField]Texture2D mouseTopBottom, mouseDiagonal, mouseDiagonalMirror, mouseMove;
 
-    [SerializeField] bool defaultMouse = true;
-    int w = 60;
-    int h = 60;
+    
 
-    Vector2 mouseImagePos;
+    [Header("Mouse Size")]
+    [SerializeField] Vector2 mouseDimensions;
+
+    //Drag mouse data
     Texture2D currentCursor;
+    Vector2 mouseImagePos;
+    bool defaultMouse = true;
+    
+ 
 
-    Grapher grapher;
     void Awake()
     {
+        //Assign Singleton Instance
         main = this; 
     }
     // Start is called before the first frame update
     void Start()
     {
+        //Set intial values
         defaultMouse = true;
         moving = false;
         draging = false;
-
-       
-
-        grapher = transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>();
         canvasDimensions.y = Camera.main.pixelHeight;
         canvasDimensions.x = Camera.main.pixelWidth;
 
+        //Assign instances
+        grapher = transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>();
         backgroundPanel = transform.Find("Background").GetComponent<RectTransform>();
+
+        //Set panel size and position
         backgroundPanel.sizeDelta = initialCanvasDimensions;
         backgroundPanel.anchoredPosition = Vector2.zero;
     }
 
-
+    /// <summary>
+    /// Find whether the mouse is over a side and set the mouse cursor to the right design
+    /// </summary>
     public void CheckDrag()
     {
+        //Set mousePos to where (0,0) is int he centre
         Vector2 mousePos = Input.mousePosition;
         mousePos -= new Vector2(canvasDimensions.x / 2, canvasDimensions.y / 2);
 
-        bool overLeft = false;
-        bool overRight = false;
-       //, overTop, overBottom;
-
-        bool cornerSelected = false;
-        bool overY = false;
+        //Cursor states
+        bool overLeft, overRight, cornerSelected = false, overY = false;
         Corner corner = Corner.BL;
 
+        //Runs if the mouse is on the gap between the grey and white part
         if (mouseOverBackground && !mouseOverForeground)
         {
-            print("It's over when it's not meant to be");
+            //Check whether the mouse is on the back panel and close to the edge
             overLeft = mousePos.x < backgroundPanel.anchoredPosition.x - backgroundPanel.sizeDelta.x / 2 + grabThreshold;
             overRight = mousePos.x > backgroundPanel.anchoredPosition.x + backgroundPanel.sizeDelta.x / 2 - grabThreshold;
 
@@ -144,12 +154,8 @@ public class BackgroundController : MonoBehaviour
                     cornerSelected = true;
                     corner = Corner.BR;
                 }
-            }
+            };
 
-
-
-            //Debug.Log("Left: " + overLeft + " Top: " + overY + " Corner: " + cornerSelected);
-            //Debug.Log(mouseDelta);
             if (Input.GetMouseButtonDown(0))
             {
                 print("Start Dragging");
@@ -391,7 +397,7 @@ public class BackgroundController : MonoBehaviour
     {
         if (!defaultMouse)
         {
-            GUI.DrawTexture(new Rect(mouseImagePos.x - (w / 2), mouseImagePos.y - (h / 2), w, h), currentCursor);
+            GUI.DrawTexture(new Rect(mouseImagePos.x - (mouseDimensions.x / 2), mouseImagePos.y - (mouseDimensions.y / 2), mouseDimensions.x, mouseDimensions.y), currentCursor);
         }
     }
 

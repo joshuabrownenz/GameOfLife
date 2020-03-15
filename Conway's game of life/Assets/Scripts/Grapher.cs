@@ -230,7 +230,7 @@ public class Grapher : MonoBehaviour
         {
             for (int i = 0; i < points.Count; i++)
             {
-                if (i < currentGraph.data.Count)
+                if (i >= currentGraph.data.Count)
                 {
                     GameObject g = points[currentGraph.data.Count];
                     points.RemoveAt(currentGraph.data.Count);

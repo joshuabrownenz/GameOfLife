@@ -37,7 +37,7 @@ public class Controller : MonoBehaviour
 
     //History
     MaxStack historyStack = new MaxStack(100);
-    Stack<bool[,]> redoStack = new Stack<bool[,]>();
+    MaxStack redoStack = new MaxStack(100);
     public bool[][,] history = new bool[100][,];
     [Header("History")]
     public int historyIndex = 0;
@@ -159,6 +159,10 @@ public class Controller : MonoBehaviour
                 {
                     LeftMove();
                 }
+                else if(Input.GetKey(KeyCode.X))
+                {
+                    Redo();
+                }
                 holdRunTime = Time.time;
             }
             #endregion
@@ -259,7 +263,7 @@ public class Controller : MonoBehaviour
         }
 
         //Adjust value of history index
-        AddToHistoryIndex();
+        //AddToHistoryIndex();
 
         //Add grid to history
         historyStack.Push((bool[,])grid.Clone());
@@ -320,7 +324,7 @@ public class Controller : MonoBehaviour
         statistics.AddValue(alive, Statistics.Stat.aliveCells);
 
 
-        AddToHistoryIndex();
+        //AddToHistoryIndex();
 
 
         historyStack.Push((bool[,])grid.Clone());
@@ -331,22 +335,24 @@ public class Controller : MonoBehaviour
 
     }
 
-    public void AddToHistoryIndex()
-    {
-        bool adjustLimit = false;
-        if (historyLimit == historyIndex)
-            adjustLimit = true;
+    //Obslete
+    //public void AddToHistoryIndex()
+    //{
+    //    bool adjustLimit = false;
+    //    if (historyLimit == historyIndex)
+    //        adjustLimit = true;
 
-        historyIndex++;
-        if (historyIndex > 99)
-            historyIndex = 0;
+    //    historyIndex++;
+    //    if (historyIndex > 99)
+    //        historyIndex = 0;
 
-        if (adjustLimit)
-            historyLimit = historyIndex;
-    }
+    //    if (adjustLimit)
+    //        historyLimit = historyIndex;
+    //}
 
     void RenderGrid()
     {
+        //Display the grid based off its state in the grid[,]
         grid = newGrid;
         for (int y = 1; y <= size.y; y++)
         {
@@ -366,6 +372,7 @@ public class Controller : MonoBehaviour
         }
     }
 
+    //Reutrns the number neighbours of a specfic cell
     int checkSquares(int x, int y)
     {
         int sum = 0;
@@ -390,6 +397,7 @@ public class Controller : MonoBehaviour
         return sum;
     }
 
+    //Change the state of a cell based off xy coords - used by editor
     public void Modify(int x, int y, bool b)
     {
         grid[x, y] = b;
@@ -398,6 +406,8 @@ public class Controller : MonoBehaviour
         else
             spriteRenderers[x, y].color = Color.white;
     }
+
+    //Change the state of a cell based off Vector2Int - used by editor
     public void Modify(Vector2Int pos, bool b)
     {
         grid[pos.x, pos.y] = b;
@@ -407,6 +417,7 @@ public class Controller : MonoBehaviour
             spriteRenderers[pos.x, pos.y].color = Color.white;
     }
 
+    //Change display of a cell without changing its state - used by display tasks in editor
     public void ModifyView(Vector2Int pos, bool b)
     {
         if (b)
@@ -415,7 +426,7 @@ public class Controller : MonoBehaviour
             spriteRenderers[pos.x, pos.y].color = Color.white;
     }
 
-
+    //Randomizes grid
     public IEnumerator RandomCellsCoroutine()
     {
         if (start || running)
@@ -442,6 +453,7 @@ public class Controller : MonoBehaviour
         yield return null;
     }
 
+    //Clear the grid
     public void Clear()
     {
         OnEdit();
@@ -449,6 +461,7 @@ public class Controller : MonoBehaviour
         RenderGrid();
     }
 
+    //On a right key press do new generations
     public void RightMove()
     {
         historyStack.Push((bool[,])grid.Clone());
@@ -474,14 +487,17 @@ public class Controller : MonoBehaviour
 
     }
 
+    //Recall previous undone movement
     public void Redo()
     {
         if(redoStack.Count != 0)
         {
+            //Retrive from history stack
             historyStack.Push((bool[,])grid.Clone());
             newGrid = redoStack.Pop();
             RenderGrid();
 
+            //Add data if it exists
             if (Statistics.main.redoData.Count != 0)
             {
                 Vector3Int data = Statistics.main.redoData.Pop();
@@ -493,6 +509,7 @@ public class Controller : MonoBehaviour
         }
     }
 
+    //Go back one generation
     public void LeftMove()
     {
         //int tempHistoryIndex = historyIndex - 1;
@@ -530,6 +547,7 @@ public class Controller : MonoBehaviour
     //    }
     //}
 
+    //Saves a scene when it is edited
     public void OnEdit()
     {
         redoStack.Clear();
