@@ -6,49 +6,50 @@ using UnityEngine.UI;
 
 public class Grapher : MonoBehaviour
 {
+    [Header("Prefabs")]
+    [SerializeField] GameObject xAxisTitlePrefab;
+    [SerializeField] GameObject yAxisTitlePrefab, xAxisDividerPrefab, yAxisDividerPrefab;
 
-    [SerializeField]
-    GameObject xAxisTitlePrefab, yAxisTitlePrefab, xAxisDividerPrefab, yAxisDividerPrefab;
-    [SerializeField]
-    Sprite pointSprite;
+    [Header("Sprite")]
+    [SerializeField] Sprite pointSprite;
 
-    public int totalGenerations;
-
-    Transform pointsParent, joinerParent, xTextParents, yTextParents, xAxisDividerParent, yAxisDividerParent;
-
+    [Header("Smallest value to display")]
     [SerializeField] public int minGraphValue;
+
+    [SerializeField]
     int yMax, xMax, xSteps, ySteps, yInterval, xInterval;
 
-    [SerializeField] List<GameObject> points = new List<GameObject>(), joiners = new List<GameObject>(), xTitles = new List<GameObject>(), yTitles = new List<GameObject>();
-    [SerializeField] List<GameObject> xAxisDividers = new List<GameObject>(), yAxisDividers = new List<GameObject>();
+    [Header("Set gap between dividers")]
+    [SerializeField] public float minGap;
 
-    [SerializeField]
-    float minGap;
+    //Divider and title data
+    float xGap, yGap, xTitleGap, yTitleGap;
 
+    [Header("Set gap sizes")]
+    [SerializeField] int[] increments;
 
-    [SerializeField]
-    float gapMutliplier, xGap, yGap, xTitleGap, yTitleGap;
+    [Header("Current Graph Data")]
+    [SerializeField] public GraphData currentGraph;
 
-    [SerializeField]
-    int[] increments;
-
-    [SerializeField]
-    public GraphData currentGraph;
-
-    BackgroundController backgroundController;
-
-    RectTransform rectTransform;
-
+    [Header("Type of graph")]
     public Statistics.Stat representing = Statistics.Stat.notSelected;
-    private void Awake()
-    {
-    }
+
+    //Lists of gameobjects
+    List<GameObject> points = new List<GameObject>(), joiners = new List<GameObject>(), xTitles = new List<GameObject>(), yTitles = new List<GameObject>();
+    List<GameObject> xAxisDividers = new List<GameObject>(), yAxisDividers = new List<GameObject>();
+
+    //Parents
+    Transform pointsParent, joinerParent, xTextParents, yTextParents, xAxisDividerParent, yAxisDividerParent;
+
+    //The rect transform of the inner graph area 
+    RectTransform rectTransform;
 
     void Start()
     {
-        backgroundController = BackgroundController.main;
+        //Get Instances
         rectTransform = GetComponent<RectTransform>();
 
+        //Set parents of each of the object types
         #region Parents
         pointsParent = transform.Find("Points");
         joinerParent = transform.Find("Lines");
@@ -58,21 +59,26 @@ public class Grapher : MonoBehaviour
         yAxisDividerParent = transform.parent.Find("Y Axis Divider");
         #endregion
 
+        //See method below
         AddDefaultObjects();
 
+        //Assign deafult values
         currentGraph.grapher = this;
-
         representing = Statistics.main.typeToBecome;
-        currentGraph.title = Statistics.titles[representing];
         Statistics.main.graphs[(int)representing] = this;
+
+        //Set title of graph
+        currentGraph.title = Statistics.titles[representing];
+
+        
+
+        //Set data from the statisics object
         currentGraph.ReplaceDataStart(Statistics.main.stats[(int)representing]);
 
         SetUpGraph();
-
-
-        //StartCoroutine(AddValues());
     }
 
+    //Fixes an error where points didn't line up with dividers since the indexes were off
     public void AddDefaultObjects()
     {
         xAxisDividers.Add(null);
@@ -80,17 +86,15 @@ public class Grapher : MonoBehaviour
         joiners.Add(null);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+    /// <summary>
+    /// Work out gaps and increments between points
+    /// </summary>
     void CalculateIncrements(float length, int points, bool isX)
     {
-        //print("Length: " + length);
         int index = 0;
         int totalPoints = 0;
+
+        //Checks each increment to see if it satifies the minGap requirement adding a buffer to the points to leave at least a divider in place
         for (int i = 0; i < increments.Length; i++)
         {
             index = i;
@@ -102,19 +106,26 @@ public class Grapher : MonoBehaviour
 
         }
 
-        if (totalPoints < 10)
+        //If there is going to be less than space for the minAmount of points set the number of point to that value
+        if (totalPoints < minGraphValue)
             totalPoints = minGraphValue;
 
         if (isX)
         {
+            //Max is the highest value the titles will display the bounds of the graph
             xMax = totalPoints;
+            //Is the number of possible points between dividers
             xInterval = increments[index];
+            //Amount of dividers plus the 2 on either side
             xSteps = totalPoints / increments[index];
+            //Gap between points
             xGap = length / totalPoints;
+            //Gap between titles and dividers > minGap
             xTitleGap = length / xSteps;
         }
         else
         {
+            //Same as before
             yMax = totalPoints;
             yInterval = increments[index];
             ySteps = totalPoints / increments[index];
@@ -122,31 +133,40 @@ public class Grapher : MonoBehaviour
             yTitleGap = length / ySteps;
         }
     }
-
+    /// <summary>
+    /// Adjusts the graph after a change has been made to the data
+    /// </summary>
     public void AdjustGraph()
     {
-        Debug.Log("Adjust");
+        //Previous steps
         int prevXSteps = xSteps, prevYSteps = ySteps;
+
+        //Calculate data for displaying the graph
         CalculateIncrements(rectTransform.rect.width, currentGraph.data.Count, true);
         CalculateIncrements(rectTransform.rect.height, currentGraph.maxYValue, false);
 
         #region Text and Dividers
-        //X Axis and Dividers 
+        //X Axis Titles and Dividers
+        //If there is less titles/dividers han before
         if (prevXSteps > xSteps)
         {
             for (int i = 0; i < prevXSteps; i++)
             {
+                //If over the new ammount of titles 
                 if (i >= xSteps)
                 {
+                    //Delete titles
                     GameObject g = xTitles[xSteps];
                     xTitles.RemoveAt(xSteps);
                     Destroy(g);
 
+                    //Delete dividers
                     g = xAxisDividers[xSteps];
                     xAxisDividers.RemoveAt(xSteps);
                     Destroy(g);
 
                 }
+                //Otherwise just move title and dividers to new position
                 else
                 {
                     ModifyXAxisTitle(i);
@@ -154,37 +174,45 @@ public class Grapher : MonoBehaviour
 
             }
         }
+        // Else there is now more steps then there used to be or the same amount
         else
         {
             
             for (int i = 0; i <= xSteps; i++)
             {
+                //If more create
                 if (i > prevXSteps)
                 {
                     CreateXAxisTitle(i);
                 }
+                //Else move to new postion
                 else
                 {
                     ModifyXAxisTitle(i);
                 }
             }
         }
-        //Y Axis Text and Dividers
+        //Y Axis Titles and Dividers
+        //If there is less titles/dividers han before
         if (prevYSteps > ySteps)
         {
             for (int i = 0; i < prevYSteps; i++)
             {
+                //If over the new ammount of titles 
                 if (i >= ySteps)
                 {
+                    //Delete titles
                     GameObject g = yTitles[ySteps];
                     yTitles.RemoveAt(ySteps);
                     Destroy(g);
 
+                    //Delete Dividers
                     g = yAxisDividers[ySteps];
                     yAxisDividers.RemoveAt(ySteps);
                     Destroy(g);
 
                 }
+                //Otherwise just move title and dividers to new position
                 else
                 {
                     ModifyYAxisTitle(i);
@@ -192,15 +220,18 @@ public class Grapher : MonoBehaviour
 
             }
         }
+        // Else there is now more steps then there used to be or the same amount
         else
         {
 
             for (int i = 0; i <= ySteps; i++)
             {
+                //If more create
                 if (i > prevYSteps)
                 {
                     CreateYAxisTitle(i);
                 }
+                //Else move to new position
                 else
                 {
                     ModifyYAxisTitle(i);
@@ -209,16 +240,20 @@ public class Grapher : MonoBehaviour
         }
         #endregion
 
-        //Points
+        //Same structure as before just for points and lines
+
+        //More than last time or same amount
         if (currentGraph.data.Count >= points.Count)
         {
             for (int i = 0; i < currentGraph.data.Count; i++)
             {
+                //Create 
                 if (i >= points.Count)
                 {
                     CreatePoint(new Vector2(xGap * i, yGap * currentGraph.data[i]));
                     CreateJoiner(i);
                 }
+                //Move
                 else
                 {
                     ModifyPoint(i);
@@ -226,10 +261,12 @@ public class Grapher : MonoBehaviour
                 }
             }
         }
+        //Less than last time
         else
         {
             for (int i = 0; i < points.Count; i++)
             {
+                //Remove Points
                 if (i >= currentGraph.data.Count)
                 {
                     GameObject g = points[currentGraph.data.Count];
@@ -240,6 +277,7 @@ public class Grapher : MonoBehaviour
                     joiners.RemoveAt(currentGraph.data.Count);
                     Destroy(g);
                 }
+                //Move
                 else
                 {
                     ModifyPoint(i);
@@ -249,136 +287,186 @@ public class Grapher : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Takes care of the initial construction of the graph
+    /// </summary>
     void SetUpGraph()
     {
         CalculateIncrements(rectTransform.rect.width, currentGraph.data.Count, true);
         CalculateIncrements(rectTransform.rect.height, currentGraph.maxYValue, false);
 
+        //Create Titles
         for (int i = 0; i <= xSteps; i++)
         {
             CreateXAxisTitle(i);
         }
-
         for (int i = 0; i <= ySteps; i++) 
         {
             CreateYAxisTitle(i);
         }
 
+        //Create points and joiners 
         for (int i = 0; i < currentGraph.data.Count; i++)
         {
             CreatePoint(new Vector2(xGap * i, yGap * currentGraph.data[i]));
             CreateJoiner(i);
         }
 
-
     }
 
-
+    /// <summary>
+    /// Creates a point at given coordinate
+    /// </summary>
     GameObject CreatePoint(Vector2 anchoredPosition)
     {
+        //Create the point using the point image and set parent to the pointsParent 
         GameObject gameObject = new GameObject("Circle", typeof(Image));
         gameObject.transform.SetParent(pointsParent, false);
         gameObject.GetComponent<Image>().sprite = pointSprite;
 
+        //Set position and size to correct values
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
         rectTransform.anchoredPosition = anchoredPosition;
         rectTransform.sizeDelta = new Vector2(15, 15);
         rectTransform.anchorMin = new Vector2(0, 0);
         rectTransform.anchorMax = new Vector2(0, 0);
 
+        //Add to list of gameObejcts 
         points.Add(gameObject);
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Gets point from index and moves it to the correct location
+    /// </summary>
     GameObject ModifyPoint(int index)
     {
+        //Retrive from index 
         GameObject gameObject = points[index];
 
+        //Move to new postion
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
         rectTransform.anchoredPosition = new Vector2(xGap * index, yGap * currentGraph.data[index]);
 
         return gameObject;
     }
 
+    /// <summary>
+    /// Create a joiner based off index
+    /// </summary>
     GameObject CreateJoiner(int index)
     {
+        //Don't create a Joiner infront of the first point
         if (index == 0)
             return null;
 
+        //Create the line (Which is a rectangle tilted)
         GameObject gameObject = new GameObject("Line", typeof(Image));
         gameObject.transform.SetParent(joinerParent, false);
 
+        //Set the colour to a greyish colour
         gameObject.GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
+        //Get point on either side
         Vector2 v1 = new Vector2(xGap * index, yGap * currentGraph.data[index]);
         Vector2 v2 = new Vector2(xGap * (index - 1), yGap * currentGraph.data[index - 1]);
+
+        //Find the distance between the points which is the length of the line
         float distance = Vector2.Distance(v1, v2);
 
+        //Set size and position
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
         rectTransform.anchoredPosition = (v1 + v2) / 2;
         rectTransform.sizeDelta = new Vector2(distance, 6f);
         rectTransform.anchorMin = new Vector2(0, 0);
         rectTransform.anchorMax = new Vector2(0, 0);
+
+        //Set rotation based off the two points
         rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Rad2Deg * Mathf.Atan2(v1.y - v2.y,v1.x - v2.x));
 
-        
-
+        //Add the the list of joiners 
         joiners.Add(gameObject);
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Modify the position of an already created Line/Joiner
+    /// </summary>
     GameObject ModifyJoiner(int index)
     {
+        //Don't do the first one
         if (index == 0)
             return null;
 
-        print("Joiner Index" + index);
-        //GameObject gameObject = new GameObject("Line", typeof(Image));
-        //gameObject.transform.SetParent(joinerParent, false);
-
-        //gameObject.GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-
+        //Retrieve from list
         GameObject gameObject = joiners[index];
 
+        //Get points on either side
         Vector2 v1 = new Vector2(xGap * index, yGap * currentGraph.data[index]);
         Vector2 v2 = new Vector2(xGap * (index - 1), yGap * currentGraph.data[index - 1]);
+
+        //Get distance between points which is length of the points
         float distance = Vector2.Distance(v1, v2);
 
+        //Set size and rotation
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-
         if (distance < 7.5f)
         {
+            //If it's short enough position it off screen to increase proformance
             rectTransform.anchoredPosition = new Vector2(-1000, -1000);
         }
         else
         {
-
+            //Set size and rotation
             rectTransform.anchoredPosition = (v1 + v2) / 2;
             rectTransform.sizeDelta = new Vector2(distance, 6f);
             rectTransform.localEulerAngles = new Vector3(0, 0, Mathf.Rad2Deg * Mathf.Atan2(v1.y - v2.y, v1.x - v2.x));
         }
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Create a X Axis Title 
+    /// </summary>
     GameObject CreateXAxisTitle(int index)
     {
+        //Instantiate the prefab parented to the x axis text parent
         GameObject gameObject = Instantiate(xAxisTitlePrefab, xTextParents);
 
+        //Set position
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(index * xTitleGap, 0);
+
+        //Set the text to the correct number
         gameObject.GetComponent<TextMeshProUGUI>().text = (index * xInterval).ToString();
+
+        //Add to list of x axis titles
         xTitles.Add(gameObject);
+
+        //Create the corresponding divider
         CreateXAxisDivider(index);
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Modify x axis title based off index
+    /// </summary>
     GameObject ModifyXAxisTitle(int index)
     {
+        //Get the title from the list
         GameObject gameObject = xTitles[index];
 
+        //Set position and number
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(index * xTitleGap, 0);
         gameObject.GetComponent<TextMeshProUGUI>().text = (index * xInterval).ToString();
 
+        //Modify the corresponding divider
         ModifyXAxisDivider(index);
+
         return gameObject;
     }
 
@@ -458,35 +546,17 @@ public class Grapher : MonoBehaviour
 
     public void ResetGraph()
     {
-        foreach(GameObject g in points)
-        {
-            Destroy(g);
-        }
+        foreach(GameObject g in points) { Destroy(g); }
         points = new List<GameObject>();
-        foreach (GameObject g in joiners)
-        {
-            Destroy(g);
-        }
+        foreach (GameObject g in joiners) { Destroy(g); }
         joiners = new List<GameObject>();
-        foreach (GameObject g in xTitles)
-        {
-            Destroy(g);
-        }
+        foreach (GameObject g in xTitles) { Destroy(g); }
         xTitles = new List<GameObject>();
-        foreach (GameObject g in yTitles)
-        {
-            Destroy(g);
-        }
+        foreach (GameObject g in yTitles) { Destroy(g); }
         yTitles = new List<GameObject>();
-        foreach (GameObject g in xAxisDividers)
-        {
-            Destroy(g);
-        }
+        foreach (GameObject g in xAxisDividers) {Destroy(g);}
         xAxisDividers = new List<GameObject>();
-        foreach (GameObject g in yAxisDividers)
-        {
-            Destroy(g);
-        }
+        foreach (GameObject g in yAxisDividers) { Destroy(g); }
         yAxisDividers = new List<GameObject>();
 
         AddDefaultObjects();
@@ -530,7 +600,6 @@ public class GraphData
     }
     public void AddDataPoint(int point)
     {
-        Debug.Log("Add Data Point");
         //data.Add(point);
         if (point > maxYValue)
             maxYValue = point;
@@ -539,8 +608,6 @@ public class GraphData
 
     public void ReplaceData(List<int> data)
     {
-
-        Debug.Log("Replace Data");
         this.data = data;
 
         maxYValue = 0;
@@ -558,8 +625,6 @@ public class GraphData
     }
     public void ReplaceDataStart(List<int> data)
     {
-
-        Debug.Log("Replace Data");
         this.data = data;
 
         maxYValue = 0;

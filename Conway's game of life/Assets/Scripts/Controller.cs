@@ -113,6 +113,8 @@ public class Controller : MonoBehaviour
 
     void Update()
     {
+        
+
         if(start)
         {
             if (!running)
@@ -198,6 +200,7 @@ public class Controller : MonoBehaviour
         //Wait for the amount of time the slider dictates
         for (int i = 0; i < slider.value; i++)
         {
+
             yield return null;
         }
 

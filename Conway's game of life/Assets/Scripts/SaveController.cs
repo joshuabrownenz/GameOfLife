@@ -6,35 +6,49 @@ using UnityEngine.UI;
 
 public class SaveController : MonoBehaviour
 {
+    //Singleton Instance
     public static SaveController main;
 
-    Vector2Int enterCoords;
+    //Instances 
     Controller controller;
-    public bool saveMode;
     GameObject NamePanel;
-    bool awaitingName;
-    bool[,] grid;
-    bool selecting;
-    Vector2Int prevCoords;
     GameObject selectParent;
+
+    //States
+    [Header("Is Saving")]
+    public bool saveMode;
+    bool awaitingName;
+    bool selecting;
+
+    //Coordinate drag data
+    Vector2Int enterCoords;
+    Vector2Int prevCoords;
+
+    //Grid to return
+    bool[,] grid;
+
     private void Awake()
     {
+        //Assign singleton
         main = this;
     }
-    // Start is called before the first frame update
+    
     void Start()
     {
+        //Get Instances
         controller = Controller.main;
         NamePanel = transform.parent.parent.Find("OpenPanel").Find("SaveName").gameObject;
+
+        //Hide NamePanel
         NamePanel.SetActive(false);
     }
-    
 
-    // Update is called once per frame
     void Update()
     {
+        //If wating for the player to click or has clicked and is draging
         if (!awaitingName && saveMode && !EventSystem.current.IsPointerOverGameObject())
         {
+            //Get current coords
             Vector2Int coords = GetCoords();
             if (Input.GetMouseButtonDown(0))
             {

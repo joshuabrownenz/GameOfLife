@@ -88,9 +88,6 @@ public class Statistics : MonoBehaviour
             typeToBecome = (Stat)graphType;
             graphsOn[graphType] = true;
             SceneManager.LoadScene("Graphs", LoadSceneMode.Additive);
-            //grapher.currentGraph.title = titles[(Stat)graphType];
-            //grapher.currentGraph.ReplaceData(stats[graphType]);
-            //graphs[graphType] = grapher;
         }
     }
 
