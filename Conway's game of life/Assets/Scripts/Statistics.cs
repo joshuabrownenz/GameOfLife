@@ -4,20 +4,58 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 public class Statistics : MonoBehaviour
 {
+    //Singleton instance
     public static Statistics main;
 
-    public List<int>[] stats = new List<int>[3];
-    public bool[] graphsOn = new bool[3];
-    public Grapher[] graphs = new Grapher[3];
-    [SerializeField] List<int> deaths;
+    //Type of graph
+    public enum Stat
+    {
+        deaths = 0,
+        births,
+        aliveCells,
+        notSelected
+    }
+
+    [Header("Data Sets")]
+    [SerializeField] public List<int>[] stats = new List<int>[3];
+
+    //Whether graphs are on or not
+    [HideInInspector] public bool[] graphsOn = new bool[3];
+
+    //Graphers corresponding with data
+    [HideInInspector] public Grapher[] graphs = new Grapher[3];
+
+    //Type the most recently created grapher becomes
     public Stat typeToBecome = Stat.notSelected;
+
+    //Data for stats section to display
     public float framesPerSecond;
+
+    //Data to place back in graphs
     public Stack<Vector3Int> redoData = new Stack<Vector3Int>();
 
+    
 
+    private void Awake()
+    {
+        main = this;
+    }
+
+    private void Start()
+    {
+        for (int i = 0; i < stats.Length; i++)
+        {
+            stats[i] = new List<int>();
+        }
+    }
+
+    //Add to a value to a data set
     public void AddValue(int value, Stat dataSet)
     {
+        //Add to the data
         stats[(int)dataSet].Add(value);
+
+        //If it is currently being displayed in graph send to graph as well
         if (graphsOn[(int)dataSet])
         {
             print("Add Value");
@@ -25,6 +63,8 @@ public class Statistics : MonoBehaviour
                 graphs[(int)dataSet].currentGraph.AddDataPoint(value);
         }
     }
+
+    //Titles for graphs
     public static Dictionary<Stat, string> titles = new Dictionary<Stat, string>()
     {
         {Stat.deaths, "Deaths Per Generation" },
@@ -33,6 +73,7 @@ public class Statistics : MonoBehaviour
 
     };
 
+    //Clear and delete all graph data
     public void ClearGraphs()
     {
         for (int i = 0; i< stats.Length; i++)
@@ -46,43 +87,19 @@ public class Statistics : MonoBehaviour
             {
                 g.currentGraph.ReplaceDataStart(stats[(int)g.representing]);
                 g.ResetGraph();
-
             }
         }
-
-
-    }
-    private void Update()
-    {
-        deaths = stats[0];
-    }
-    public enum Stat
-    {
-        deaths = 0,
-        births,
-        aliveCells,
-        notSelected
     }
 
-    private void Awake()
-    {
-        main = this;
-    }
-
-    private void Start()
-    {
-        for(int i = 0; i < stats.Length; i++)
-        {
-            stats[i] = new List<int>();
-        }
-    }
-
+    //Open or close graph
     public void OpenGraph(int graphType)
     {
+        //If graph is already on then close
         if (graphsOn[graphType])
         {
             graphs[graphType].transform.parent.parent.GetComponent<BackgroundController>().Close();
         }
+        //Open new grapher/graph
         else
         {
             typeToBecome = (Stat)graphType;
@@ -91,6 +108,7 @@ public class Statistics : MonoBehaviour
         }
     }
 
+    //List the most recent data entry and save in the redoData stack
     public void DeleteLast()
     {
         if(stats[0].Count != 0)

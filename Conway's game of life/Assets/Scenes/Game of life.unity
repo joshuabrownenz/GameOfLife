@@ -2816,7 +2816,7 @@ Camera:
   m_TargetDisplay: 0
   m_TargetEye: 0
   m_HDR: 1
-  m_AllowMSAA: 0
+  m_AllowMSAA: 1
   m_AllowDynamicResolution: 0
   m_ForceIntoRT: 0
   m_OcclusionCulling: 0
@@ -7201,6 +7201,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cellUI: {fileID: 2835180482775028923, guid: c762ce249d4ce40f09db0bba82a928cd, type: 3}
   saves: []
+  maxCells: 1000
   page: 1
   optionImages: []
   startPosition: {x: -279.2, y: 540}
@@ -8165,7 +8166,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  deaths: 
   typeToBecome: 3
   framesPerSecond: 0
 --- !u!1 &1543811296

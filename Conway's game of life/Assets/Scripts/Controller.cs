@@ -12,14 +12,10 @@ public class Controller : MonoBehaviour
     Statistics statistics;
 
     [Header("Constants")]
-    [SerializeField]
-    public Vector2Int size;
-    [SerializeField]
-    public bool recordStats;
-    [SerializeField]
-    float holdTime, gapHoldLength;
-    [SerializeField]
-    Slider slider;
+    [SerializeField] public Vector2Int size;
+    [SerializeField] public bool recordStats;
+    [SerializeField] float holdTime, gapHoldLength;
+    [SerializeField] Slider slider;
 
     [Header("Prefabs")]
     [SerializeField]
@@ -35,13 +31,13 @@ public class Controller : MonoBehaviour
     public bool start;
     public bool running;
 
-    //History
+    //History varibles
     MaxStack historyStack = new MaxStack(100);
     MaxStack redoStack = new MaxStack(100);
-    public bool[][,] history = new bool[100][,];
+    //public bool[][,] history = new bool[100][,];
     [Header("History")]
-    public int historyIndex = 0;
-    public int historyLimit = 0;
+    //public int historyIndex = 0;
+    //public int historyLimit = 0;
     bool arrowHold;
     float holdStartTime;
     float holdRunTime;
@@ -104,17 +100,15 @@ public class Controller : MonoBehaviour
         //Set all the cells to the correct colour
         RenderGrid();
 
-        //Assign array of Multidimentional array as the right size
-        for (int i = 0; i < 100; i++)
-        {
-            history[i] = new bool[size.x + 2, size.y + 2];
-        }
+        ////Assign array of Multidimentional array as the right size
+        //for (int i = 0; i < 100; i++)
+        //{
+        //    history[i] = new bool[size.x + 2, size.y + 2];
+        //}
     }
 
     void Update()
     {
-        
-
         if(start)
         {
             if (!running)
@@ -200,13 +194,10 @@ public class Controller : MonoBehaviour
         //Wait for the amount of time the slider dictates
         for (int i = 0; i < slider.value; i++)
         {
-
             yield return null;
         }
 
         running = false;
-
-        
     }
 
     public void CalculateInitialValues()

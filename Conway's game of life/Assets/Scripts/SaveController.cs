@@ -13,11 +13,12 @@ public class SaveController : MonoBehaviour
     Controller controller;
     GameObject NamePanel;
     GameObject selectParent;
+    Image image;
 
     //States
     [Header("Is Saving")]
     public bool saveMode;
-    bool awaitingName;
+    [HideInInspector] public bool awaitingName;
     bool selecting;
 
     //Coordinate drag data
@@ -37,6 +38,7 @@ public class SaveController : MonoBehaviour
     {
         //Get Instances
         controller = Controller.main;
+        image = GetComponent<Image>();
         NamePanel = transform.parent.parent.Find("OpenPanel").Find("SaveName").gameObject;
 
         //Hide NamePanel
@@ -45,11 +47,19 @@ public class SaveController : MonoBehaviour
 
     void Update()
     {
+        //Set the colour of the save button
+        if (saveMode)
+            image.color = Color.yellow;
+        else
+            image.color = Color.white;
+
         //If wating for the player to click or has clicked and is draging
         if (!awaitingName && saveMode && !EventSystem.current.IsPointerOverGameObject())
         {
             //Get current coords
             Vector2Int coords = GetCoords();
+
+            //On intial click set start coords 
             if (Input.GetMouseButtonDown(0))
             {
                 if (coords == new Vector2Int(-1, -1))
@@ -58,42 +68,36 @@ public class SaveController : MonoBehaviour
                 selecting = true;
 
             }
+
+            //Render the outline if the mouse is stil down
             else if (Input.GetMouseButton(0) && selecting)
             {
                 RenderSelect(coords);
             }
+
+            //If the button is released generate a vector between the bottom left corner and top right corner of selection
             else if (Input.GetMouseButtonUp(0) && selecting)
             {
                 if (coords == new Vector2Int(-1, -1))
                     coords = prevCoords;
+
                 Vector2Int vector = enterCoords - coords;
                 vector *= -1;
-
-                //Debug.Log("Enter Coords: " + enterCoords);
-                //Debug.Log("Exit Coords: " + coords);
-                //Debug.Log("Vector " + vector);
                 if (vector.x < 0)
                 {
-                    //Debug.Log("Adjust X");
                     vector.x = Mathf.Abs(vector.x);
                     enterCoords.x -= Mathf.Abs(vector.x);
                 }
                 if (vector.y < 0)
                 {
-                    //Debug.Log("Adjust Y");
                     vector.y = Mathf.Abs(vector.y);
                     enterCoords.y -= Mathf.Abs(vector.y);
                 }
-
-
                 
-
-                //Debug.Log("Adjusted Enter Coords: " + enterCoords);
-                //Debug.Log("Adjusted Vector " + vector);
-
-                
-
+                //Get a bool[,] of the selection based of the vector and modifed enter coords
                 grid = CalculateSection(vector);
+
+                //Set states
                 awaitingName = true;
                 NamePanel.SetActive(true);
                 Editor.main.allowEditing = false;
@@ -104,18 +108,20 @@ public class SaveController : MonoBehaviour
         }
     }
 
+    //PLace a outline arround the seclection
     void RenderSelect(Vector2Int coords)
     {
+        //If the selection hasn't changed from last time make not changes
         if (coords == prevCoords)
             return;
 
         if (coords == new Vector2Int(-1, -1))
             coords = prevCoords;
 
+        //Work out Coords of bottom left corner of selection and then vector to top right
         Vector2Int tempEnterCoords = enterCoords;
         Vector2Int vector = tempEnterCoords - coords;
         vector *= -1;
-
         if (vector.x < 0)
         {
             vector.x = Mathf.Abs(vector.x);
@@ -126,46 +132,53 @@ public class SaveController : MonoBehaviour
             vector.y = Mathf.Abs(vector.y);
             tempEnterCoords.y -= Mathf.Abs(vector.y);
         }
+
+        //Size of grid
         Vector2Int size = Controller.main.size;
 
+        //Delete old outline and create parent for new one
         Destroy(selectParent);
         selectParent = new GameObject("Select Image");
 
-        Debug.Log("Adjusted Enter Coords: " + tempEnterCoords);
-        Debug.Log("Adjusted Vector " + vector);
 
+        //Makes the top and bottom edge
         for (int x = 0; x <= vector.x; x ++)
         {
+            //Bottom
             GameObject obj = Instantiate(Resources.Load("SelectEdge") as GameObject);
             obj.name = "Bottom Edge " + x;
             obj.transform.parent = selectParent.transform;
             obj.transform.position = new Vector3((x + tempEnterCoords.x) / 2f - 0.25f - size.x / 4f, tempEnterCoords.y / 2f - 0.25f - size.y / 4f, -1);
             obj.transform.rotation = Quaternion.Euler(0, 0, 270);
 
+            //Top
             obj = Instantiate(Resources.Load("SelectEdge") as GameObject);
             obj.name = "Top Edge " + x;
             obj.transform.parent = selectParent.transform;
             obj.transform.position = new Vector3((x + tempEnterCoords.x) / 2f - 0.25f - size.x / 4f, (tempEnterCoords.y + vector.y) / 2f - 0.25f - size.y / 4f, -1);
             obj.transform.rotation = Quaternion.Euler(0, 0, 90);
         }
+
+        //Makes the left and right edge
         for (int y = 0; y <= vector.y; y++)
         {
+            //Left
             GameObject obj = Instantiate(Resources.Load("SelectEdge") as GameObject);
             obj.name = "Left Edge " + (y + 1);
             obj.transform.parent = selectParent.transform;
             obj.transform.position = new Vector3(tempEnterCoords.x / 2f - 0.25f - size.x / 4f, (tempEnterCoords.y + y) / 2f - 0.25f - size.y / 4f, -1);
             obj.transform.rotation = Quaternion.Euler(0, 0, 180);
 
+            //Right
             obj = Instantiate(Resources.Load("SelectEdge") as GameObject);
             obj.name = "Right Edge " + (y + 1);
             obj.transform.parent = selectParent.transform;
             obj.transform.position = new Vector3((tempEnterCoords.x + vector.x) / 2f - 0.25f - size.x / 4f, (tempEnterCoords.y + y) / 2f - 0.25f - size.y / 4f, -1);
         }
 
-        //obj.transform.position = new Vector2(x / 2f - 0.25f - size.x / 4f, y / 2f - 0.25f - size.y / 4f);
-
     }
 
+    //Adds new entry to the list
     void InsertElement(SaveData data)
     {
         SaveData[] oldSaves = SaveDisplay.main.saves;
@@ -179,6 +192,7 @@ public class SaveController : MonoBehaviour
         SaveDisplay.main.SaveToFile();
     }
 
+    //Works out the grid to save
     bool[,] CalculateSection(Vector2Int vector)
     {
         bool[,] grid = new bool[Mathf.Abs(vector.x) + 1, Mathf.Abs(vector.y) + 1];
@@ -186,13 +200,13 @@ public class SaveController : MonoBehaviour
         {
             for (int x = 1; x <= vector.x + 1; x++)
             {
-                //Debug.Log("Grid Cell: (" + (x - 1) + ", " + (y - 1) + ") Check Cell: (" + (enterCoords.x + x - 1) + ", " + (enterCoords.y + y - 1) + ") and it is " + controller.grid[enterCoords.x + x - 2, enterCoords.y + y - 2]);
                 grid[x - 1, y - 1] = controller.grid[enterCoords.x + x - 1, enterCoords.y + y - 1];
             }
         }
         return grid;
     }
 
+    //Gets Coords of the cell the mouse is above
     Vector2Int GetCoords()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -211,17 +225,28 @@ public class SaveController : MonoBehaviour
         return new Vector2Int(-1, -1);
     }
 
+    //After dialogue box has been accepted save and add grid to list
     public void Save()
     {
-        InputField input = NamePanel.transform.Find("InputField").GetComponent<InputField>();
+        //Create new save object
         SaveData data = new SaveData();
+
+        //Get text from dialogue box
+        InputField input = NamePanel.transform.Find("InputField").GetComponent<InputField>();
         data.name = input.text;
-        data.saveGrid = grid;
         input.text = "";
+
+        //Add grid to save object
+        data.saveGrid = grid;
+
+        //Add to list
         InsertElement(data);
+
+        //Close the dialogue box and end saving
         Cancel();
     }
 
+    //Disable dialogue box and end the saving process
     public void Cancel()
     {
         GetComponent<Image>().color = Color.white;
@@ -233,9 +258,14 @@ public class SaveController : MonoBehaviour
         Destroy(selectParent);
     }
 
-
+    //Activate or disabler savemode
     public void ActivateSaves()
     {
+        if(Controller.main.start)
+        {
+            return;
+        }
+
         if (!saveMode)
             GetComponent<Image>().color = Color.yellow;
         else

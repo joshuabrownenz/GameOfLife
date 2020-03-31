@@ -237,7 +237,7 @@ public class Editor : MonoBehaviour
     //    }
     //}
 
-     //Sends out a ray cast and retrives the CellContainer from the cell and gets the cells coordinate
+    //Sends out a ray cast and retrives the CellContainer from the cell and gets the cells coordinate
     Vector2Int GetCoords(Vector2Int coords, out bool isOver)
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

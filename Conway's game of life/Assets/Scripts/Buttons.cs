@@ -53,6 +53,18 @@ public class Buttons : MonoBehaviour
         startText.text = "Resume";
         stopButton.gameObject.SetActive(true);
         startButton.gameObject.SetActive(false);
+
+        //Stop the saving process
+        if(SaveController.main.saveMode)
+        {
+            SaveController.main.saveMode = false;
+            Editor.main.allowEditing = false;
+            if(SaveController.main.awaitingName)
+            {
+                SaveController.main.Cancel();
+            }
+        }
+
     }
 
     void StopButton()

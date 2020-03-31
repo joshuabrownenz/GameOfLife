@@ -87,7 +87,7 @@ public class BackgroundController : MonoBehaviour
     }
 
     /// <summary>
-    /// Find whether the mouse is over a side and set the mouse cursor to the right design
+    /// Find whether the mouse is over a side and set the mouse cursor to the right design, as well as activating dragging or moving
     /// </summary>
     public void CheckDrag()
     {
@@ -113,10 +113,14 @@ public class BackgroundController : MonoBehaviour
             //Top
             if (mousePos.y > backgroundPanel.anchoredPosition.y + backgroundPanel.sizeDelta.y / 2 - grabThreshold)
             {
+                //Set to vertical cursor
                 if (!draging)
                     currentCursor = mouseTopBottom;
+
                 overY = true;
-                //overTop = true;
+
+
+                //CHecks if it is over a corner
                 if (overLeft)
                 {
                     if (!draging)
@@ -133,13 +137,17 @@ public class BackgroundController : MonoBehaviour
                 }
 
             }
+
             //Bottom
             else if (mousePos.y < backgroundPanel.anchoredPosition.y - backgroundPanel.sizeDelta.y / 2 + grabThreshold)
             {
+                //Sets to vertical cursor
                 if (!draging)
                     currentCursor = mouseTopBottom;
+
                 overY = true;
-                //overBottom = true;
+
+                //Checks if over corner
                 if (overLeft)
                 {
                     if (!draging)
@@ -156,15 +164,18 @@ public class BackgroundController : MonoBehaviour
                 }
             };
 
+            //If mouse button is pressed, set current selection states to the global rather than glocal varibles
             if (Input.GetMouseButtonDown(0))
             {
-                print("Start Dragging");
+                //Set varibles 
                 this.cornerSelected = cornerSelected;
                 this.overY = overY;
                 this.corner = corner;
 
+
                 if(!cornerSelected)
                 {
+                    //Sets the active side
                     if(overY)
                     {
                         if(mousePos.y > backgroundPanel.anchoredPosition.y)
@@ -191,17 +202,22 @@ public class BackgroundController : MonoBehaviour
 
                 }
 
-                
+                //dragging refers to resizing
                 draging = overLeft || overRight || overY;
+
+                //If it is not dragging then it is moving the graph
                 moving = !draging;
             }
 
+            //SIf not over edge then set cursur to the move icon
             if (!(overLeft || overRight || overY) && !draging)
                 currentCursor = mouseMove;
 
+            //Turn off normal mouse
             defaultMouse = false; 
 
         }
+        //Else if not over a spot which allows dragging set it back to normal mouse
         else
         {
             if (!draging && !moving)
@@ -211,10 +227,18 @@ public class BackgroundController : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// Resize panel based of drag and side/corner data
+    /// </summary>
     void ResizePanel()
     {
+        //Change to width and height
         float widthDelta = 0, heightDelta = 0;
+
+        //Multipliers determine the direction the position change
         int xMulti = 1, yMulti = 1;
+
+        //Set mulpliers for corners
         if (cornerSelected)
         {
             switch (corner)
@@ -240,8 +264,9 @@ public class BackgroundController : MonoBehaviour
                     heightDelta = -mouseDelta.y;
                     break;
             }
-
         }
+
+        //If over top or bottom adjust multpliers
         else if(overY)
         {
             //Top
@@ -255,8 +280,12 @@ public class BackgroundController : MonoBehaviour
             {
                 heightDelta = -mouseDelta.y;
             }
+
+            //Cancel out x change
             mouseDelta *= new Vector2(0, 1);
         }
+
+        //If over left or right adjust multipliers
         else
         {
             //Right
@@ -269,14 +298,19 @@ public class BackgroundController : MonoBehaviour
             {
                 widthDelta = -mouseDelta.x;
             }
+
+            //Cancel out y change
             mouseDelta *= new Vector2(1, 0);
         }
 
+
+        //Save for comparsion later
         Vector2 prevSizeDelta = backgroundPanel.sizeDelta;
 
+        //Change by height and width deltas
         backgroundPanel.sizeDelta += new Vector2(widthDelta, heightDelta);
 
-
+        //If smaller than min size, adjust to min size
         if (backgroundPanel.sizeDelta.x < minSize.x)
         {
             backgroundPanel.sizeDelta = new Vector2(minSize.x, backgroundPanel.sizeDelta.y);
@@ -289,44 +323,49 @@ public class BackgroundController : MonoBehaviour
             mouseDelta.y = (prevSizeDelta.y - minSize.y) * yMulti;
         }
 
+        //Adjust position
         backgroundPanel.anchoredPosition += mouseDelta / 2;
 
-        //Debug.Log("Yes");
-
+        //Adjust ponts and text and dividers of graph
         grapher.AdjustGraph();
     }
 
-    void MovePanel()
-    {
-        backgroundPanel.anchoredPosition += mouseDelta;
-    }
-
-    // Update is called once per frame
     void Update()
     {
+        //Hide the default cursor to been seen otherwise allow it to be seen
         if (!defaultMouse)
             Cursor.visible = false;
         else
             Cursor.visible = true;
 
-        mouseImagePos = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+        //Get mouse pos
         Vector3 mousePos = Input.mousePosition;
 
+        //Set the postion of ther cursor
+        mouseImagePos = new Vector2(mousePos.x, Screen.height - mousePos.y);
+
+        //Keeps the graph on the screen - x axis
         if (mousePos.x > Screen.width - edgeDragThreshold)
             mousePos.x = Screen.width - edgeDragThreshold;
         else if (mousePos.x < edgeDragThreshold)
             mousePos.x = edgeDragThreshold;
 
+        //Keeps the graph on the screen - x axis
         if (mousePos.y > Screen.height - edgeDragThreshold)
             mousePos.y = Screen.height - edgeDragThreshold;
         else if (mousePos.y < edgeDragThreshold)
             mousePos.y = edgeDragThreshold;
 
+        //Calculate change in mouse position
         mouseDelta = mousePos - prevMousePos;
+
+        //Check if graph and prepare to drag
         CheckDrag();
 
+        //If draging or moving and has stopped
         if((moving || draging) && !Input.GetMouseButton(0))
         {
+            //Go back to deafult settings
             draging = false;
             moving = false;
             defaultMouse = true;
@@ -337,43 +376,22 @@ public class BackgroundController : MonoBehaviour
         }
         else if(moving)
         {
-            MovePanel();
+            //Move panel based of mouse delta
+            backgroundPanel.anchoredPosition += mouseDelta;
         }
         prevMousePos = mousePos;
     }
 
 
-
-    //bool GetOver()
-    //{
-    //    Ray ray = Camera.main.ScreenPointToRay(mousePos);
-    //    RaycastHit hit;
-    //    if (Physics.Raycast(ray, out hit, 100))
-    //    {
-    //        if (hit.transform.gameObject == backgroundPanel.gameObject)
-    //        {
-    //            return true;
-    //        }
-    //        Debug.Log(hit.transform.gameObject);
-    //    }
-    //    else
-    //    {
-    //    }
-    //    return false;
-    //}
-
+    //Change states based of mouse entering or exiting background or foreground
     public void MouseEnterBackground()
     {
-        Debug.Log("Enter");
         mouseOverBackground = true;
     }
-
     public void MouseExitBackground()
     {
-        Debug.Log("Exit");
         mouseOverBackground = false;
     }
-
     public void MouseEnterForeground()
     {
         mouseOverForeground = true;
@@ -383,16 +401,23 @@ public class BackgroundController : MonoBehaviour
         mouseOverForeground = false;
     }
 
+    //Closing a graph
     public void Close()
     {
+        //Turn off graphs in the statistics object
         Statistics.main.graphsOn[(int)transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>().representing] = false;
         Statistics.main.graphs[(int)transform.Find("Background").Find("Main Graph Area").GetComponent<Grapher>().representing] = null;
+
+        //Set mouse back to deafult
         defaultMouse = true;
         Cursor.visible = true;
+
+        //Destroy the graph and this instance
         Destroy(transform.parent.gameObject);
         Destroy(this);
     }
 
+    //Adjust changed mouse cursor position
     void OnGUI()
     {
         if (!defaultMouse)

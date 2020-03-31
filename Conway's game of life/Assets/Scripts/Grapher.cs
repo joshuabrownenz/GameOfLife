@@ -134,7 +134,7 @@ public class Grapher : MonoBehaviour
         }
     }
     /// <summary>
-    /// Adjusts the graph after a change has been made to the data
+    /// Adjusts the graph after a change has been made to the data or size
     /// </summary>
     public void AdjustGraph()
     {
@@ -470,80 +470,143 @@ public class Grapher : MonoBehaviour
         return gameObject;
     }
 
+    /// <summary>
+    /// Create an X axis divider based off index
+    /// </summary>
     GameObject CreateXAxisDivider(int index)
     {
+        //Do not create first an last divider
         if (index == 0 || index == xSteps)
             return null;
+
+        //Instantiate, parent then adjust transform
         GameObject gameObject = Instantiate(xAxisDividerPrefab, xAxisDividerParent);
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(index * xTitleGap + 1.5f, 0);
         gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(rectTransform.rect.height, 3);
+
+        //Add to list of dividers 
         xAxisDividers.Add(gameObject);
+       
         return gameObject;
     }
 
+    /// <summary>
+    /// Modify a previously created x axis divider
+    /// </summary>
     GameObject ModifyXAxisDivider(int index)
     {
+        //Do not move first or last null divider
         if (index == 0 || index >= xSteps)
             return null;
 
+        //If there is not a divider created then create a new one
         if(index >= xAxisDividers.Count)
         {
             return CreateXAxisDivider(index);
         }
+
+        //Retreive from list
         GameObject gameObject = xAxisDividers[index];
+
+        //Adjust transform
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(index * xTitleGap + 1.5f, 0);
         gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(rectTransform.rect.height, 3);
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Create a y axis title based off an index
+    /// </summary>
     GameObject CreateYAxisTitle(int index)
     {
+        //Create from prefab
         GameObject gameObject = Instantiate(yAxisTitlePrefab, yTextParents);
 
+        //Ajust tranform
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, index * yTitleGap);
+
+        //Set text
         gameObject.GetComponent<TextMeshProUGUI>().text = (index * yInterval).ToString();
+
+        //Add to list of y axis titles
         yTitles.Add(gameObject);
+
+        //Create corrseponding divider
         CreateYAxisDivider(index);
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Modify Y axis title based off index
+    /// </summary>
     GameObject ModifyYAxisTitle(int index)
     {
+        //Retrieve from list
         GameObject gameObject = yTitles[index];
 
+        //Adjust position 
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, index * yTitleGap);
+
+        //Adjust text of title
         gameObject.GetComponent<TextMeshProUGUI>().text = (index * yInterval).ToString();
 
+        //Modify corrseponding divider
         ModifyYAxisDivider(index);
         return gameObject;
     }
 
+    /// <summary>
+    /// Create Y axis divider based off index 
+    /// </summary>
     GameObject CreateYAxisDivider(int index)
     {
+        //Do not create if first or last
         if (index == 0 || index == ySteps)
             return null;
+
+        //Instantiate object from prefab
         GameObject gameObject = Instantiate(yAxisDividerPrefab, yAxisDividerParent);
+
+        //Adjust transform
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, index * yTitleGap);
         gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(rectTransform.rect.width, 3);
+
+        //Add to list of Y axis dividers
         yAxisDividers.Add(gameObject);
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Modify previously created y axis dividers
+    /// </summary>
     GameObject ModifyYAxisDivider(int index)
     {
+        //Do not adjust if first or last
         if (index == 0 || index >= ySteps)
             return null;
 
+        //If does not exist currently 
         if (index >= yAxisDividers.Count)
         {
             return CreateYAxisDivider(index);
         }
+
+        //Retreive from list
         GameObject gameObject = yAxisDividers[index];
+
+        //Adjust transform
         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, index * yTitleGap + 1.5f);
         gameObject.GetComponent<RectTransform>().sizeDelta = new Vector2(rectTransform.rect.width, 3);
+
         return gameObject;
     }
 
+    /// <summary>
+    /// Reset all lists to default values, then recreate graph
+    /// </summary>
     public void ResetGraph()
     {
         foreach(GameObject g in points) { Destroy(g); }
@@ -564,30 +627,30 @@ public class Grapher : MonoBehaviour
 
     }
 
-    IEnumerator AddValues()
-    {
-        while (true)
-        {
-            currentGraph.AddDataPoint(Random.Range(0, 100));
-            yield return null;
-        }
-    }
-
 }
 
 
 
 
-
+/// <summary>
+/// This class contains all data needed to create a graph
+/// </summary>
 [System.Serializable]
 public class GraphData
 {
+    //The grapher resposible for rendering this graph
     public Grapher grapher;
+
+    //The title to display at the top of the graph
     public string title;
+
+    //The data to display
     public List<int> data;
-    List<int> sortedData;
+
+    //Maximum y value to display
     public int maxYValue;
 
+    //Constructor
     public GraphData(string title, List<int> data, Grapher grapher)
     {
         this.title = title;
@@ -598,14 +661,16 @@ public class GraphData
         this.maxYValue = data[data.Count - 1];
 
     }
+
+    //Add a new point to an already created graph data which calculates the max value
     public void AddDataPoint(int point)
     {
-        //data.Add(point);
         if (point > maxYValue)
             maxYValue = point;
         grapher.AdjustGraph();
     }
 
+    //Replace the data to display
     public void ReplaceData(List<int> data)
     {
         this.data = data;
@@ -623,6 +688,8 @@ public class GraphData
 
         grapher.transform.parent.Find("Title").GetComponent<TextMeshProUGUI>().text = title;
     }
+
+    //Replace the data before it has been displayed
     public void ReplaceDataStart(List<int> data)
     {
         this.data = data;
