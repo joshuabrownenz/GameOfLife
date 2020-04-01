@@ -98,6 +98,7 @@ public class SaveController : MonoBehaviour
                 grid = CalculateSection(vector);
 
                 //Set states
+                Controller.main.textOpen = true;
                 awaitingName = true;
                 NamePanel.SetActive(true);
                 Editor.main.allowEditing = false;
@@ -249,6 +250,7 @@ public class SaveController : MonoBehaviour
     //Disable dialogue box and end the saving process
     public void Cancel()
     {
+        Controller.main.textOpen = false;
         GetComponent<Image>().color = Color.white;
         NamePanel.SetActive(false);
         Editor.main.allowEditing = true;

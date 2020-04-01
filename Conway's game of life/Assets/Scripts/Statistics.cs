@@ -17,7 +17,7 @@ public class Statistics : MonoBehaviour
     }
 
     [Header("Data Sets")]
-    [SerializeField] public List<int>[] stats = new List<int>[3];
+    [HideInInspector] public List<int>[] stats = new List<int>[3];
 
     //Whether graphs are on or not
     [HideInInspector] public bool[] graphsOn = new bool[3];
@@ -26,10 +26,11 @@ public class Statistics : MonoBehaviour
     [HideInInspector] public Grapher[] graphs = new Grapher[3];
 
     //Type the most recently created grapher becomes
-    public Stat typeToBecome = Stat.notSelected;
+    [HideInInspector] public Stat typeToBecome = Stat.notSelected;
 
+    [Header("Generations Per Second")]
     //Data for stats section to display
-    public float framesPerSecond;
+    public float generationsPerSecond;
 
     //Data to place back in graphs
     public Stack<Vector3Int> redoData = new Stack<Vector3Int>();

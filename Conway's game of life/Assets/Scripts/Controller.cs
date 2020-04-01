@@ -30,6 +30,7 @@ public class Controller : MonoBehaviour
     [SerializeField]
     public bool start;
     public bool running;
+    public bool textOpen;
 
     //History varibles
     MaxStack historyStack = new MaxStack(100);
@@ -117,7 +118,7 @@ public class Controller : MonoBehaviour
                 StartCoroutine(compute());
             }
         }
-        else
+        else if(!textOpen)
         {
             //Detect Key presses as well as hold
             #region Detect Key presses
@@ -169,7 +170,7 @@ public class Controller : MonoBehaviour
     {
         running = true;
         //Calculate frame rate 
-        Statistics.main.framesPerSecond = 1f / (Time.time - timeOfCompute);
+        Statistics.main.generationsPerSecond = 1f / (Time.time - timeOfCompute);
         timeOfCompute = Time.time;
 
         //Clear redo data
@@ -458,7 +459,7 @@ public class Controller : MonoBehaviour
     //On a right key press do new generations
     public void RightMove()
     {
-        historyStack.Push((bool[,])grid.Clone());
+        //historyStack.Push((bool[,])grid.Clone());
         //object tempGrid = grid.Clone();
 
         //history[historyIndex] = (bool[,])tempGrid;

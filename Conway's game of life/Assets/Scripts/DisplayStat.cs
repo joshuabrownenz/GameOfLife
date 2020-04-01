@@ -26,9 +26,9 @@ public class DisplayStat : MonoBehaviour
         //If this is the framerate script then assign the text value to the correct number
         if (frameRate)
         {
-            if(statistics.framesPerSecond != 0)
+            if(statistics.generationsPerSecond != 0)
             {
-                text.text = Math.Round(statistics.framesPerSecond, 4).ToString();
+                text.text = Math.Round(statistics.generationsPerSecond, 4).ToString();
             }
             else
             {
@@ -56,9 +56,9 @@ public class DisplayStat : MonoBehaviour
         //If this is the framerate script then assign the text value to the correct number
         if (frameRate)
         {
-            if (statistics.framesPerSecond != 0)
+            if (statistics.generationsPerSecond != 0)
             {
-                text.text = Math.Round(statistics.framesPerSecond, 4).ToString();
+                text.text = Math.Round(statistics.generationsPerSecond, 4).ToString();
             }
             else
             {
