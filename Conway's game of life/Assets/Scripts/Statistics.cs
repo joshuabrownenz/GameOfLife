@@ -59,7 +59,6 @@ public class Statistics : MonoBehaviour
         //If it is currently being displayed in graph send to graph as well
         if (graphsOn[(int)dataSet])
         {
-            print("Add Value");
             if(graphs[(int)dataSet] != null)
                 graphs[(int)dataSet].currentGraph.AddDataPoint(value);
         }

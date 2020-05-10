@@ -10,6 +10,8 @@ public class Editor : MonoBehaviour
     [Header("Allow Editing")]
     public bool allowEditing;
 
+    [Header("Allow click behind exceptions")]
+    public Vector2 statsSafeZone;
 
     //Instances
     Controller controller;
@@ -65,13 +67,23 @@ public class Editor : MonoBehaviour
                 
             }
 
-
+            
             //Get coords the cell the mouse is over, (newCoords) is the default value the value that is returned if the mouse is not over anyting
-            bool isOver = false;
-            newCoords = GetCoords(newCoords, out isOver);
+            newCoords = GetCoords(newCoords, out bool isOver);
 
+           
+            bool overBlockingObject = EventSystem.current.IsPointerOverGameObject();
+            if(overBlockingObject)
+            {
+                Vector2 mousePos = Input.mousePosition;
+                if(mousePos.x > Camera.main.pixelWidth - statsSafeZone.x * Camera.main.pixelWidth / 1920f && mousePos.y < statsSafeZone.y * Camera.main.pixelHeight/1080f)
+                {
+                    overBlockingObject = false;
+                }
+            }
+                
             //On first click of edit
-            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject() && !savePlacer.justPlaced && isOver)
+            if (Input.GetMouseButtonDown(0) && !overBlockingObject && !savePlacer.justPlaced && isOver)
             {
                 //Set defaults 
                 editedSquares = new List<Vector2Int>();
@@ -103,7 +115,7 @@ public class Editor : MonoBehaviour
             }
 
             //If the mouse is held while drag editing is functioning
-            if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject() && isDragEditing)
+            if (Input.GetMouseButton(0) && !overBlockingObject && isDragEditing)
             {
                 //Change the state of the cell if it has not already been changed
                 if (!editedSquares.Contains(newCoords))
@@ -114,7 +126,7 @@ public class Editor : MonoBehaviour
             }
 
             //Calaculate the cells to turn on if it is a shift drag
-            if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject() && isShift)
+            if (Input.GetMouseButton(0) && !overBlockingObject && isShift)
             {
                 //Calculate the number of cells in both directions
                 Vector2Int vector = enterCoords - newCoords;

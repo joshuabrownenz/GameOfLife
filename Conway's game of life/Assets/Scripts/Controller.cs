@@ -323,7 +323,6 @@ public class Controller : MonoBehaviour
 
 
         historyStack.Push((bool[,])grid.Clone());
-        print("Count is: " + historyStack.Count);
         //history[historyIndex] = (bool[,])tempGrid;
 
         //historyStack.Push((bool[,])grid.Clone());

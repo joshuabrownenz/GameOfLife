@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class LoadCamera : MonoBehaviour
 {
+    public static LoadCamera main;
     //Instances
     Controller controller;
     Camera view;
@@ -11,6 +12,7 @@ public class LoadCamera : MonoBehaviour
     [Header("Constants")]
     [SerializeField] Vector2 scrollLimits;
     [SerializeField] float zoomRate, scrollSpeed, dragSpeed, startAmount;
+    public bool allowZoom = true;
 
     //Data
     Vector2 previousMousePostion;
@@ -18,6 +20,7 @@ public class LoadCamera : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        main = this;
         //Assign Static Instances
         view = GetComponent<Camera>();
         controller = Controller.main;
@@ -37,26 +40,28 @@ public class LoadCamera : MonoBehaviour
     {
         //Adjust the zoom of the camera based off the mouse wheel
         #region Scroll
-        float scroll = Input.GetAxis("MouseScrollWheel");
+        if (allowZoom)
+        {
+            float scroll = Input.GetAxis("MouseScrollWheel");
 
-        //Check maximum speed
-        if (scroll > scrollSpeed)
-            scroll = scrollSpeed;
-        if (scroll < -scrollSpeed)
-            scroll = -scrollSpeed;
+            //Check maximum speed
+            if (scroll > scrollSpeed)
+                scroll = scrollSpeed;
+            if (scroll < -scrollSpeed)
+                scroll = -scrollSpeed;
 
-        //Muliply the scroll factor by the current size
-        scroll *= view.orthographicSize;
+            //Muliply the scroll factor by the current size
+            scroll *= view.orthographicSize;
 
-        //Set the zoom of the camera
-        view.orthographicSize += scroll * Time.deltaTime * zoomRate;
+            //Set the zoom of the camera
+            view.orthographicSize += scroll * Time.deltaTime * zoomRate;
 
-        //Check if its over the limits and correct
-        if(view.orthographicSize > scrollLimits.y)
-            view.orthographicSize = scrollLimits.y;
-        if (view.orthographicSize < scrollLimits.x)
-            view.orthographicSize = scrollLimits.x;
-
+            //Check if its over the limits and correct
+            if (view.orthographicSize > scrollLimits.y)
+                view.orthographicSize = scrollLimits.y;
+            if (view.orthographicSize < scrollLimits.x)
+                view.orthographicSize = scrollLimits.x;
+        }
         #endregion
 
         //Adjust the position of the camera based off a right click drag

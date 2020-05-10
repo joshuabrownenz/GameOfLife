@@ -2779,6 +2779,7 @@ MonoBehaviour:
   scrollSpeed: 0.3
   dragSpeed: 0.3
   startAmount: 0.3
+  allowZoom: 1
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -3091,10 +3092,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -4562,6 +4563,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   saveMode: 0
+  awaitingName: 0
 --- !u!1 &868229456
 GameObject:
   m_ObjectHideFlags: 0
@@ -8115,8 +8117,7 @@ MonoBehaviour:
   cell: {fileID: 6402614630092695591, guid: 5a3d80d38524b4006a7093fd92359288, type: 3}
   start: 0
   running: 0
-  historyIndex: 0
-  historyLimit: 0
+  textOpen: 0
 --- !u!4 &1516928983
 Transform:
   m_ObjectHideFlags: 0
@@ -8144,6 +8145,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   allowEditing: 1
+  statsSafeZone: {x: 395, y: 234.8}
   mostRecentCoords: {x: 0, y: 0}
   shiftLength: 0
   prevShiftLength: 0
@@ -8167,7 +8169,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   typeToBecome: 3
-  framesPerSecond: 0
+  generationsPerSecond: 0
 --- !u!1 &1543811296
 GameObject:
   m_ObjectHideFlags: 0

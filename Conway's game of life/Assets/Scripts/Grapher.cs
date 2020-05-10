@@ -18,12 +18,25 @@ public class Grapher : MonoBehaviour
 
     [SerializeField]
     int yMax, xMax, xSteps, ySteps, yInterval, xInterval;
+    bool overMainArea;
 
     [Header("Set gap between dividers")]
     [SerializeField] public float minGap;
 
+    [Header("Compression Settings")]
+    [SerializeField] public int maxAmountofPointsToShow;
+    [SerializeField] public int compressionFactor = 1;
+
+    [Header("Graph navigation")]
+    [SerializeField] public float zoomFactor = 1;
+    float prevZoomFactor = 1;
+    [SerializeField] public float zoomSensitivity;
+    [SerializeField] public float zoomOffset = 0;
+    [SerializeField] public float zoomOffsetTest = 0;
+
     //Divider and title data
     float xGap, yGap, xTitleGap, yTitleGap;
+    Vector2 prevMousePosition;
 
     [Header("Set gap sizes")]
     [SerializeField] int[] increments;
@@ -55,8 +68,8 @@ public class Grapher : MonoBehaviour
         joinerParent = transform.Find("Lines");
         xTextParents = transform.parent.Find("X Axis Text");
         yTextParents = transform.parent.Find("Y Axis Text");
-        xAxisDividerParent = transform.parent.Find("X Axis Divider");
-        yAxisDividerParent = transform.parent.Find("Y Axis Divider");
+        xAxisDividerParent = transform.Find("Dividers").Find("X Axis Divider");
+        yAxisDividerParent = transform.Find("Dividers").Find("Y Axis Divider");
         #endregion
 
         //See method below
@@ -86,6 +99,42 @@ public class Grapher : MonoBehaviour
         joiners.Add(null);
     }
 
+    private void Update()
+    {
+        if(overMainArea)
+        {
+            zoomFactor += Input.GetAxis("MouseScrollWheel") * zoomSensitivity;
+            if(zoomFactor < 1)
+                zoomFactor = 1;
+
+            if(Input.GetMouseButtonDown(0))
+            {
+                prevMousePosition = Input.mousePosition;
+            }
+            if (Input.GetMouseButton(0))
+            {
+                zoomOffset += prevMousePosition.x - Input.mousePosition.x;
+                if (zoomOffset < 0)
+                    zoomOffset = 0;
+                prevMousePosition = Input.mousePosition;
+            }
+            AdjustGraph();
+        }
+    }
+
+    public void OverMainArea()
+    {
+        overMainArea = true;
+        LoadCamera.main.allowZoom = false;
+    }
+
+    public void notOverMainArea()
+    {
+        overMainArea = false;
+        LoadCamera.main.allowZoom = true;
+    }
+
+
     /// <summary>
     /// Work out gaps and increments between points
     /// </summary>
@@ -93,6 +142,7 @@ public class Grapher : MonoBehaviour
     {
         int index = 0;
         int totalPoints = 0;
+
 
         //Checks each increment to see if it satifies the minGap requirement adding a buffer to the points to leave at least a divider in place
         for (int i = 0; i < increments.Length; i++)
@@ -119,9 +169,19 @@ public class Grapher : MonoBehaviour
             //Amount of dividers plus the 2 on either side
             xSteps = totalPoints / increments[index];
             //Gap between points
-            xGap = length / totalPoints;
+            xGap = length / totalPoints * zoomFactor;
             //Gap between titles and dividers > minGap
-            xTitleGap = length / xSteps;
+            xTitleGap = length / xSteps * zoomFactor;
+
+            //Calculate Compression Factor
+
+            int pointsOnScreen = Mathf.CeilToInt((rectTransform.rect.width / xGap) / compressionFactor);
+            if (pointsOnScreen > currentGraph.data[currentGraph.dataToDisplay].Count)
+                pointsOnScreen = currentGraph.data[currentGraph.dataToDisplay].Count;
+
+            compressionFactor = Mathf.CeilToInt((float)pointsOnScreen/ (float)maxAmountofPointsToShow);
+            if (compressionFactor < 1)
+                compressionFactor = 1;
         }
         else
         {
@@ -133,6 +193,7 @@ public class Grapher : MonoBehaviour
             yTitleGap = length / ySteps;
         }
     }
+
     /// <summary>
     /// Adjusts the graph after a change has been made to the data or size
     /// </summary>
@@ -142,12 +203,16 @@ public class Grapher : MonoBehaviour
         int prevXSteps = xSteps, prevYSteps = ySteps;
 
         //Calculate data for displaying the graph
-        CalculateIncrements(rectTransform.rect.width, currentGraph.data.Count, true);
+        CalculateIncrements(rectTransform.rect.width, currentGraph.data[(int)GraphData.dataType.pure].Count, true);
         CalculateIncrements(rectTransform.rect.height, currentGraph.maxYValue, false);
 
+        currentGraph.CompressData(compressionFactor);
+
+
         #region Text and Dividers
+
         //X Axis Titles and Dividers
-        //If there is less titles/dividers han before
+        //If there is less titles/dividers than before
         if (prevXSteps > xSteps)
         {
             for (int i = 0; i < prevXSteps; i++)
@@ -240,24 +305,40 @@ public class Grapher : MonoBehaviour
         }
         #endregion
 
+        int pointsOnScreen = Mathf.CeilToInt((rectTransform.rect.width / xGap) / compressionFactor);
+        if (pointsOnScreen > currentGraph.data[currentGraph.dataToDisplay].Count)
+            pointsOnScreen = currentGraph.data[currentGraph.dataToDisplay].Count;
+        //Debug.Log("1. Points on screen = " + pointsOnScreen);
+        //Debug.Log("2. rectTransform.rect.width / xGap = " + (rectTransform.rect.width / xGap));
+        //Debug.Log("3. total points = " + currentGraph.data[currentGraph.dataToDisplay].Count);
         //Same structure as before just for points and lines
-
         //More than last time or same amount
-        if (currentGraph.data.Count >= points.Count)
+        if (pointsOnScreen >= points.Count)
         {
-            for (int i = 0; i < currentGraph.data.Count; i++)
+            for (int i = 0; i < pointsOnScreen; i++)
             {
+                //if(xGap * i * compressionFactor > rectTransform.rect.width)
+                //{
+                //    GameObject g = points[currentGraph.data[currentGraph.dataToDisplay].Count];
+                //    points.RemoveAt(currentGraph.data[currentGraph.dataToDisplay].Count);
+                //    Destroy(g);
+
+                //    g = joiners[currentGraph.data[currentGraph.dataToDisplay].Count];
+                //    joiners.RemoveAt(currentGraph.data[currentGraph.dataToDisplay].Count);
+                //    Destroy(g);
+                //    continue;
+                //}
                 //Create 
                 if (i >= points.Count)
                 {
-                    CreatePoint(new Vector2(xGap * i, yGap * currentGraph.data[i]));
-                    CreateJoiner(i);
+                    CreatePoint(new Vector2(xGap * i * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][i]));
+                    CreateJoiner(i, false);
                 }
                 //Move
                 else
                 {
                     ModifyPoint(i);
-                    ModifyJoiner(i);
+                    ModifyJoiner(i, false);
                 }
             }
         }
@@ -267,23 +348,28 @@ public class Grapher : MonoBehaviour
             for (int i = 0; i < points.Count; i++)
             {
                 //Remove Points
-                if (i >= currentGraph.data.Count)
+                if (i >= pointsOnScreen)
                 {
-                    GameObject g = points[currentGraph.data.Count];
-                    points.RemoveAt(currentGraph.data.Count);
+                    GameObject g = points[pointsOnScreen];
+                    points.RemoveAt(pointsOnScreen);
                     Destroy(g);
 
-                    g = joiners[currentGraph.data.Count];
-                    joiners.RemoveAt(currentGraph.data.Count);
+                    g = joiners[pointsOnScreen];
+                    joiners.RemoveAt(pointsOnScreen);
                     Destroy(g);
                 }
                 //Move
                 else
                 {
                     ModifyPoint(i);
-                    ModifyJoiner(i);
+                    ModifyJoiner(i, false);
                 }
             }
+        }
+        if (pointsOnScreen < currentGraph.data[currentGraph.dataToDisplay].Count && currentGraph.data[currentGraph.dataToDisplay].Count > 5) 
+        {
+            CreateHiddenPoint(new Vector2(xGap * pointsOnScreen * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][pointsOnScreen]));
+            CreateJoiner(pointsOnScreen, true);
         }
     }
 
@@ -293,8 +379,10 @@ public class Grapher : MonoBehaviour
     /// </summary>
     void SetUpGraph()
     {
-        CalculateIncrements(rectTransform.rect.width, currentGraph.data.Count, true);
+        CalculateIncrements(rectTransform.rect.width, currentGraph.data[currentGraph.dataToDisplay].Count, true);
         CalculateIncrements(rectTransform.rect.height, currentGraph.maxYValue, false);
+
+        currentGraph.CompressData(compressionFactor);
 
         //Create Titles
         for (int i = 0; i <= xSteps; i++)
@@ -307,11 +395,12 @@ public class Grapher : MonoBehaviour
         }
 
         //Create points and joiners 
-        for (int i = 0; i < currentGraph.data.Count; i++)
+        for (int i = 0; i < currentGraph.data[currentGraph.dataToDisplay].Count; i++)
         {
-            CreatePoint(new Vector2(xGap * i, yGap * currentGraph.data[i]));
-            CreateJoiner(i);
+            CreatePoint(new Vector2(xGap * i * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][i]));
+            CreateJoiner(i, false);
         }
+        AdjustGraph();
 
     }
 
@@ -327,11 +416,30 @@ public class Grapher : MonoBehaviour
 
         //Set position and size to correct values
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = anchoredPosition;
         rectTransform.sizeDelta = new Vector2(15, 15);
         rectTransform.anchorMin = new Vector2(0, 0);
         rectTransform.anchorMax = new Vector2(0, 0);
+        rectTransform.anchoredPosition = anchoredPosition;
+        //Add to list of gameObejcts 
+        points.Add(gameObject);
 
+        return gameObject;
+    }
+
+    GameObject CreateHiddenPoint(Vector2 anchoredPosition)
+    {
+        //Create the point using the point image and set parent to the pointsParent 
+        GameObject gameObject = new GameObject("Circle", typeof(Image));
+        gameObject.transform.SetParent(pointsParent, false);
+        gameObject.GetComponent<Image>().sprite = pointSprite;
+        gameObject.SetActive(false);
+
+        //Set position and size to correct values
+        RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(15, 15);
+        rectTransform.anchorMin = new Vector2(0, 0);
+        rectTransform.anchorMax = new Vector2(0, 0);
+        rectTransform.anchoredPosition = anchoredPosition;
         //Add to list of gameObejcts 
         points.Add(gameObject);
 
@@ -345,10 +453,10 @@ public class Grapher : MonoBehaviour
     {
         //Retrive from index 
         GameObject gameObject = points[index];
-
+        gameObject.SetActive(true);
         //Move to new postion
         RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = new Vector2(xGap * index, yGap * currentGraph.data[index]);
+        rectTransform.anchoredPosition = new Vector2(xGap * index * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][index]);
 
         return gameObject;
     }
@@ -356,7 +464,7 @@ public class Grapher : MonoBehaviour
     /// <summary>
     /// Create a joiner based off index
     /// </summary>
-    GameObject CreateJoiner(int index)
+    GameObject CreateJoiner(int index, bool cutRightSide)
     {
         //Don't create a Joiner infront of the first point
         if (index == 0)
@@ -370,9 +478,16 @@ public class Grapher : MonoBehaviour
         gameObject.GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
         //Get point on either side
-        Vector2 v1 = new Vector2(xGap * index, yGap * currentGraph.data[index]);
-        Vector2 v2 = new Vector2(xGap * (index - 1), yGap * currentGraph.data[index - 1]);
+        Vector2 v1 = new Vector2(xGap * index * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][index]);
+        Vector2 v2 = new Vector2(xGap * (index - 1) * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][index - 1]);
 
+
+        if(cutRightSide)
+        {
+            float m = (v2.y - v1.y) / (v2.x - v1.x);
+            //Equation: y = mx - m*v1.x + v1.y
+            v1 = new Vector2(this.rectTransform.rect.width, (m * this.rectTransform.rect.width) - (m * v2.x) + (v2.y));
+        }
         //Find the distance between the points which is the length of the line
         float distance = Vector2.Distance(v1, v2);
 
@@ -395,7 +510,7 @@ public class Grapher : MonoBehaviour
     /// <summary>
     /// Modify the position of an already created Line/Joiner
     /// </summary>
-    GameObject ModifyJoiner(int index)
+    GameObject ModifyJoiner(int index, bool cutRightSide)
     {
         //Don't do the first one
         if (index == 0)
@@ -405,9 +520,15 @@ public class Grapher : MonoBehaviour
         GameObject gameObject = joiners[index];
 
         //Get points on either side
-        Vector2 v1 = new Vector2(xGap * index, yGap * currentGraph.data[index]);
-        Vector2 v2 = new Vector2(xGap * (index - 1), yGap * currentGraph.data[index - 1]);
+        Vector2 v1 = new Vector2(xGap * index * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][index]);
+        Vector2 v2 = new Vector2(xGap * (index - 1) * compressionFactor, yGap * currentGraph.data[currentGraph.dataToDisplay][index - 1]);
 
+        if (cutRightSide)
+        {
+            float m = (v1.y - v2.y) / (v1.x - v2.x);
+            //Equation: y = mx - m*v1.x + v1.y
+            v1 = new Vector2(this.rectTransform.rect.width, (m * this.rectTransform.rect.width) - (m * v1.x) + (v1.y));
+        }
         //Get distance between points which is length of the points
         float distance = Vector2.Distance(v1, v2);
 
@@ -438,10 +559,17 @@ public class Grapher : MonoBehaviour
         GameObject gameObject = Instantiate(xAxisTitlePrefab, xTextParents);
 
         //Set position
-        gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(index * xTitleGap, 0);
+        gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(index * xTitleGap - zoomOffset, 0);
 
         //Set the text to the correct number
         gameObject.GetComponent<TextMeshProUGUI>().text = (index * xInterval).ToString();
+
+        gameObject.SetActive(true);
+
+        if (index * xTitleGap - zoomOffset > rectTransform.rect.width + 1 || index * xTitleGap - zoomOffset < -1)
+        {
+            gameObject.SetActive(false);
+        }
 
         //Add to list of x axis titles
         xTitles.Add(gameObject);
@@ -461,8 +589,14 @@ public class Grapher : MonoBehaviour
         GameObject gameObject = xTitles[index];
 
         //Set position and number
-        gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(index * xTitleGap, 0);
+        gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(index * xTitleGap - zoomOffset, 0);
         gameObject.GetComponent<TextMeshProUGUI>().text = (index * xInterval).ToString();
+        gameObject.SetActive(true);
+
+        if(index * xTitleGap - zoomOffset > rectTransform.rect.width + 1 || index * xTitleGap - zoomOffset < -1)
+        {
+            gameObject.SetActive(false);
+        }
 
         //Modify the corresponding divider
         ModifyXAxisDivider(index);
@@ -644,18 +778,33 @@ public class GraphData
     //The title to display at the top of the graph
     public string title;
 
-    //The data to display
-    public List<int> data;
+    public enum dataType
+    {
+        pure,
+        compressed
+    }
+
+    public int dataToDisplay;
+
+    //The data
+    public List<int>[] data = new List<int>[2];
 
     //Maximum y value to display
     public int maxYValue;
 
+    //Compression
+    int prevCompressionFactor = 1;
+    int uncompressedValues = 0; 
+   
     //Constructor
     public GraphData(string title, List<int> data, Grapher grapher)
     {
+        this.data = new List<int>[2];
         this.title = title;
-        this.data = data;
+        this.data[(int)dataType.pure] = data;
+        dataToDisplay = (int)dataType.pure;
         this.grapher = grapher;
+        
 
         data.Sort();
         this.maxYValue = data[data.Count - 1];
@@ -673,7 +822,8 @@ public class GraphData
     //Replace the data to display
     public void ReplaceData(List<int> data)
     {
-        this.data = data;
+        this.data = new List<int>[2];
+        this.data[(int)dataType.pure] = data;
 
         maxYValue = 0;
         foreach(int i in data)
@@ -692,7 +842,9 @@ public class GraphData
     //Replace the data before it has been displayed
     public void ReplaceDataStart(List<int> data)
     {
-        this.data = data;
+        this.data = new List<int>[2];
+        this.data[(int)dataType.pure] = data;
+        dataToDisplay = (int)dataType.pure;
 
         maxYValue = 0;
         foreach (int i in data)
@@ -706,5 +858,38 @@ public class GraphData
 
         grapher.transform.parent.Find("Title").GetComponent<TextMeshProUGUI>().text = title;
     }
+
+    public void CompressData(int compressionFactor)
+    {
+        data[(int)dataType.compressed] = new List<int>();
+
+        if(compressionFactor <= 1)
+        {
+            dataToDisplay = (int)dataType.pure;
+            return;
+        }
+
+        int lastIndex = 0;
+        for(int index = 0; index < data[(int)dataType.pure].Count; index += compressionFactor)
+        {
+            lastIndex = index;
+            int maxValue = data[(int)dataType.pure][index];
+            for(int i = 1; i < compressionFactor; i++)
+            {
+                if (data[(int)dataType.pure].Count <= index + i)
+                {
+                    break;
+                }
+                if(maxValue < data[(int)dataType.pure][index + i])
+                {
+                    maxValue = data[(int)dataType.pure][index + i];
+                }
+            }
+            data[(int)dataType.compressed].Add(maxValue);
+        }
+        uncompressedValues = data[(int)dataType.pure].Count - lastIndex - 1;
+        dataToDisplay = (int)dataType.compressed;
+    }
+
 
 }
